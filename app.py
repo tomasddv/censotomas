@@ -21,9 +21,7 @@ st.markdown('''
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 html, body, [class*="css"], [data-testid="stAppViewContainer"] { font-family:'DM Sans',sans-serif; }
-.stApp {
-    color: #000000 !important;
-}
+.stApp {color: #000000 !important;}
 [data-testid="stAppViewContainer"] {background:#f5f8f6;}
 [data-testid="stSidebar"] {background:#eaf3ee; border-right:1px solid #d5e4da;}
 .block-container {padding-top:1.7rem;max-width:1500px;}
@@ -46,7 +44,7 @@ section[data-testid="stSidebar"] h2 {color:#094f34!important;}
 ''', unsafe_allow_html=True)
 
 GREEN='#0b8451'; MINT='#53c79a'; NAVY='#173a35'; ORANGE='#e09b46'; RED='#cd5360'
-CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#7186a1'}
+CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#000000'}
 PERIOD = {'Abril':'ABR-26','Septiembre':'SEP-26'}
 ROOT=Path(__file__).resolve().parent
 
