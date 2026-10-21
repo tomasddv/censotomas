@@ -21,7 +21,6 @@ st.markdown('''
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 html, body, [class*="css"], [data-testid="stAppViewContainer"] { font-family:'DM Sans',sans-serif; }
-.stApp {color: #000000 !important;}
 [data-testid="stAppViewContainer"] {background:#f5f8f6;}
 [data-testid="stSidebar"] {background:#eaf3ee; border-right:1px solid #d5e4da;}
 .block-container {padding-top:1.7rem;max-width:1500px;}
@@ -39,16 +38,23 @@ h1 {font-weight:700!important;}
 .info {background:#e8f5ec;border-left:4px solid #168c58;padding:12px 18px;border-radius:7px;font-size:13px;color:#1b5939;margin:14px 0;}
 .mini {color:#597566;font-size:12px;line-height:1.5;}
 section[data-testid="stSidebar"] h2 {color:#094f34!important;}
-[data-testid="stHorizontalBlock"] {gap:0.7rem;}.stApp {
-    color: #000000 !important;
-}h1, h2, h3, p {
+[data-testid="stHorizontalBlock"] {gap:0.7rem;}
+/* Tipografía negra para toda la interfaz, incluidos botones, menús y KPI. */
+html, body, .stApp, .stApp *,
+[data-baseweb="popover"], [data-baseweb="popover"] *,
+[role="listbox"], [role="listbox"] * {
     color: #000000 !important;
 }
+/* El encabezado se aclara para que el texto negro conserve contraste. */
+.hero {background:linear-gradient(120deg,#d5f3e2,#b2e7c9 75%,#8fdbb4) !important;}
+.hero h1, .hero p, .hero .eyebrow {color:#000000 !important;opacity:1;}
+/* Plotly utiliza SVG: fijar también relleno de las etiquetas. */
+[data-testid="stPlotlyChart"] svg text {fill:#000000 !important;}
 </style>
 ''', unsafe_allow_html=True)
 
 GREEN='#0b8451'; MINT='#53c79a'; NAVY='#173a35'; ORANGE='#e09b46'; RED='#cd5360'
-CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#000000'}
+CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#7186a1'}
 PERIOD = {'Abril':'ABR-26','Septiembre':'SEP-26'}
 ROOT=Path(__file__).resolve().parent
 
@@ -63,9 +69,13 @@ def pp(x): return f'{x:+.2f} pp'.replace('.',',') if x is not None and not pd.is
 
 def figure(fig,height=380):
     fig.update_layout(height=height,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='DM Sans',color=NAVY,size=12),margin=dict(l=18,r=16,t=36,b=27),
-        legend=dict(orientation='h',y=1.14,x=0),xaxis=dict(showgrid=False),
-        yaxis=dict(gridcolor='#e8efeb',zeroline=False))
+        font=dict(family='DM Sans',color='#000000',size=12),margin=dict(l=18,r=16,t=36,b=27),
+        legend=dict(orientation='h',y=1.14,x=0,font=dict(color='#000000')),
+        xaxis=dict(showgrid=False,tickfont=dict(color='#000000'),title_font=dict(color='#000000')),
+        yaxis=dict(gridcolor='#e8efeb',zeroline=False,tickfont=dict(color='#000000'),title_font=dict(color='#000000')),
+        hoverlabel=dict(bgcolor='#ffffff',font=dict(color='#000000')),
+        coloraxis_colorbar=dict(tickfont=dict(color='#000000'),title_font=dict(color='#000000')))
+    fig.update_traces(textfont_color='#000000')
     return fig
 
 
