@@ -21,6 +21,9 @@ st.markdown('''
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 html, body, [class*="css"], [data-testid="stAppViewContainer"] { font-family:'DM Sans',sans-serif; }
+.stApp {
+    color: #000000 !important;
+}
 [data-testid="stAppViewContainer"] {background:#f5f8f6;}
 [data-testid="stSidebar"] {background:#eaf3ee; border-right:1px solid #d5e4da;}
 .block-container {padding-top:1.7rem;max-width:1500px;}
