@@ -39,7 +39,11 @@ h1 {font-weight:700!important;}
 .info {background:#e8f5ec;border-left:4px solid #168c58;padding:12px 18px;border-radius:7px;font-size:13px;color:#1b5939;margin:14px 0;}
 .mini {color:#597566;font-size:12px;line-height:1.5;}
 section[data-testid="stSidebar"] h2 {color:#094f34!important;}
-[data-testid="stHorizontalBlock"] {gap:0.7rem;}
+[data-testid="stHorizontalBlock"] {gap:0.7rem;}.stApp {
+    color: #000000 !important;
+}h1, h2, h3, p {
+    color: #000000 !important;
+}
 </style>
 ''', unsafe_allow_html=True)
 
