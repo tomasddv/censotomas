@@ -169,7 +169,16 @@ def parse_censo(file_bytes, periodo):
     """
     with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
         strs = _strings(z)
-        it = _read_rows(z, _sheet_xml(z), strs)
+        # Octubre 2025 contiene una única hoja '10-2025' y sus encabezados
+        # están una fila antes que los de las plantillas de 2026.
+        es_octubre = periodo == 'Octubre'
+        sheet = '10-2025' if es_octubre else 'Base HL'
+        ultima_fila_encabezado = 8 if es_octubre else 9
+        fila_empresa = 3 if es_octubre else 4
+        fila_marca = 4 if es_octubre else 5
+        fila_segmento = 5 if es_octubre else 6
+        fila_calibre = 6 if es_octubre else 7
+        it = _read_rows(z, _sheet_xml(z, sheet), strs)
         hdr = {}
         registros = []
         segmentos = []
@@ -177,11 +186,11 @@ def parse_censo(file_bytes, periodo):
         errores = []
         cols_ready = False
         for row_number, vec in it:
-            if row_number <= 9:
+            if row_number <= ultima_fila_encabezado:
                 hdr[row_number] = vec
                 continue
             if not cols_ready:
-                h = hdr.get(9,{})
+                h = hdr.get(ultima_fila_encabezado,{})
                 vol_cols = {norm(v): i for i,v in h.items() if norm(v).startswith('VOL ') or norm(v)=='SOM'}
                 needs = ['VOL CMQ.', 'VOL CCU.', 'VOL OTROS']
                 if not all(k in vol_cols for k in needs):
@@ -193,21 +202,21 @@ def parse_censo(file_bytes, periodo):
                     if m and i < vol_cols['VOL CMQ.']: seg_cols[(m.group(1),m.group(2))]=i
                 question_cols = []
                 last_cal = ''
-                for i,owner in sorted(hdr.get(4,{}).items()):
+                for i,owner in sorted(hdr.get(fila_empresa,{}).items()):
                     own = norm(owner)
-                    if own not in OWNERS or i < 16 or i >= first_seg: continue
-                    brand = marca(hdr.get(5,{}).get(i))
+                    if own not in OWNERS or i < (14 if es_octubre else 16) or i >= first_seg: continue
+                    brand = marca(hdr.get(fila_marca,{}).get(i))
                     if not brand: continue
-                    raw_cal = hdr.get(7,{}).get(i)
+                    raw_cal = hdr.get(fila_calibre,{}).get(i)
                     if raw_cal not in (None, '', 0):
                         last_cal = raw_cal
                     cal = calibre(raw_cal or last_cal)
                     # La pestaña Septiembre usa celdas de calibre combinadas: propagar
                     # el encabezado válido hacia todas las preguntas del mismo bloque.
                     if not cal:
-                        descr = norm(hdr.get(9,{}).get(i))
+                        descr = norm(hdr.get(ultima_fila_encabezado,{}).get(i))
                         cal = calibre(descr.split('-', 1)[-1]) if '-' in descr else ''
-                    seg = norm(hdr.get(6,{}).get(i))
+                    seg = norm(hdr.get(fila_segmento,{}).get(i))
                     if seg not in SEGS: seg = 'SIN CLASIFICAR'
                     question_cols.append((i,own,brand,cal,seg))
                 cols_ready = True
@@ -217,12 +226,13 @@ def parse_censo(file_bytes, periodo):
             if not pid or not pid.isdigit(): continue
             vol = {owner: numeric(vec.get(vol_cols['VOL '+owner+'.' if owner != 'OTROS' else 'VOL OTROS'])) for owner in OWNERS}
             mercado = sum(vol.values())
-            is_censable = norm(vec.get(13)) in {'SI','SÍ'} if periodo == 'Septiembre' else True
+            is_censable = (norm(vec.get(13)) == 'RELEVADO' if es_octubre
+                           else norm(vec.get(13)) in {'SI', 'SÍ'} if periodo == 'Septiembre' else True)
             rec = {'Periodo': periodo, 'PDV': pid, 'Supervisor': staff(vec.get(9),'supervisor'),
                    'Promotor': staff(vec.get(10),'promotor'), 'Canal': canal(vec.get(11)),
                    'Subcanal': subcanal(vec.get(12)), 'Censable': is_censable,
-                   'Estado censo': norm(vec.get(13)) if periodo=='Septiembre' else 'SI',
-                   'Motivo no censo': norm(vec.get(14)) if periodo=='Septiembre' else norm(vec.get(13)),
+                   'Estado censo': norm(vec.get(13)) if (es_octubre or periodo=='Septiembre') else 'SI',
+                   'Motivo no censo': norm(vec.get(14)) if periodo=='Septiembre' else ('' if es_octubre else norm(vec.get(13))),
                    'HL CMQ': vol['CMQ'], 'HL CCU': vol['CCU'], 'HL OTROS': vol['OTROS'],
                    'HL Mercado': mercado, 'SOM CMQ': 100*vol['CMQ']/mercado if mercado > 0 else None,
                    'Fila origen': row_number}
@@ -281,34 +291,34 @@ def tabla_grupos(dfa,dfb,field):
     rows = []
     for key in values:
         a = indicadores(dfa[dfa[field]==key]); b = indicadores(dfb[dfb[field]==key])
-        rows.append({'Grupo':key,'PDV Abr':a['PDV'],'PDV Sep':b['PDV'],
-                     'HL Abr':a['HL mercado'],'HL Sep':b['HL mercado'],
-                     'SOM Abr':a['SOM'] if a['HL mercado']>0 else None,
-                     'SOM Sep':b['SOM'] if b['HL mercado']>0 else None,
+        rows.append({'Grupo':key,'PDV Ant':a['PDV'],'PDV Act':b['PDV'],
+                     'HL Ant':a['HL mercado'],'HL Act':b['HL mercado'],
+                     'SOM Ant':a['SOM'] if a['HL mercado']>0 else None,
+                     'SOM Act':b['SOM'] if b['HL mercado']>0 else None,
                      'Δ pp':b['SOM']-a['SOM'] if a['HL mercado']>0 and b['HL mercado']>0 else None,
-                     'DF Abr':a['DF'] if a['PDV cerveza'] else None,
-                     'DF Sep':b['DF'] if b['PDV cerveza'] else None,
-                     'DP Abr':a['DP'] if a['HL mercado']>0 else None,
-                     'DP Sep':b['DP'] if b['HL mercado']>0 else None})
+                     'DF Ant':a['DF'] if a['PDV cerveza'] else None,
+                     'DF Act':b['DF'] if b['PDV cerveza'] else None,
+                     'DP Ant':a['DP'] if a['HL mercado']>0 else None,
+                     'DP Act':b['DP'] if b['HL mercado']>0 else None})
     return pd.DataFrame(rows)
 
 
-def segment_summary(dfa,dfb,segments):
+def segment_summary(dfa,dfb,segments,period_a,period_b):
     rows = []
     for seg in SEGS:
-        sa = segments[(segments.Periodo=='Abril') & (segments.PDV.isin(dfa.PDV)) & (segments.Segmento==seg)]
-        sb = segments[(segments.Periodo=='Septiembre') & (segments.PDV.isin(dfb.PDV)) & (segments.Segmento==seg)]
+        sa = segments[(segments.Periodo==period_a) & (segments.PDV.isin(dfa.PDV)) & (segments.Segmento==seg)]
+        sb = segments[(segments.Periodo==period_b) & (segments.PDV.isin(dfb.PDV)) & (segments.Segmento==seg)]
         av = sa.groupby('Empresa').HL.sum().to_dict(); bv = sb.groupby('Empresa').HL.sum().to_dict()
         ta = sum(av.values()); tb = sum(bv.values())
         xa=100*av.get('CMQ',0)/ta if ta>0 else None
         xb=100*bv.get('CMQ',0)/tb if tb>0 else None
-        rows.append({'Segmento':seg,'Abr CMQ HL':av.get('CMQ',0),'Abr CCU HL':av.get('CCU',0),
-                     'Abr Otros HL':av.get('OTROS',0),'Abr Mercado HL':ta,'SOM Abr':xa,
-                     'Sep CMQ HL':bv.get('CMQ',0),'Sep CCU HL':bv.get('CCU',0),
-                     'Sep Otros HL':bv.get('OTROS',0),'Sep Mercado HL':tb,'SOM Sep':xb,
+        rows.append({'Segmento':seg,'Ant CMQ HL':av.get('CMQ',0),'Ant CCU HL':av.get('CCU',0),
+                     'Ant Otros HL':av.get('OTROS',0),'Ant Mercado HL':ta,'SOM Ant':xa,
+                     'Act CMQ HL':bv.get('CMQ',0),'Act CCU HL':bv.get('CCU',0),
+                     'Act Otros HL':bv.get('OTROS',0),'Act Mercado HL':tb,'SOM Act':xb,
                      'Δ pp':xb-xa if xa is not None and xb is not None else None,
-                     'Peso Abr':100*ta/dfa['HL Mercado'].sum() if dfa['HL Mercado'].sum()>0 else 0,
-                     'Peso Sep':100*tb/dfb['HL Mercado'].sum() if dfb['HL Mercado'].sum()>0 else 0})
+                     'Peso Ant':100*ta/dfa['HL Mercado'].sum() if dfa['HL Mercado'].sum()>0 else 0,
+                     'Peso Act':100*tb/dfb['HL Mercado'].sum() if dfb['HL Mercado'].sum()>0 else 0})
     return pd.DataFrame(rows)
 
 
@@ -350,21 +360,21 @@ def presence_distribution(df,presence, period, dimension='Marca',company='CMQ'):
 def priorities(df, previous, min_hl=1.0, som_below=60.0):
     out=df[(df['HL Mercado']>=min_hl)&(df['SOM CMQ'].fillna(100)<som_below)].copy()
     out['HL competencia']=out['HL CCU']+out['HL OTROS']
-    bef=previous[['PDV','SOM CMQ']].rename(columns={'SOM CMQ':'SOM abril'})
+    bef=previous[['PDV','SOM CMQ']].rename(columns={'SOM CMQ':'SOM anterior'})
     out=out.merge(bef,on='PDV',how='left')
-    out['Δ pp cliente']=out['SOM CMQ']-out['SOM abril']
+    out['Δ pp cliente']=out['SOM CMQ']-out['SOM anterior']
     return out.sort_values('HL competencia',ascending=False).reset_index(drop=True)
 
 
 def pdv_changes(dfa,dfb):
     af=dfa[['PDV','Supervisor','Promotor','Canal','Subcanal','SOM CMQ','HL Mercado','HL CMQ']].rename(
-        columns={'SOM CMQ':'SOM Abr','HL Mercado':'HL Abr','HL CMQ':'CMQ Abr',
-                 'Supervisor':'Supervisor Abr','Promotor':'Promotor Abr',
-                 'Canal':'Canal Abr','Subcanal':'Subcanal Abr'})
+        columns={'SOM CMQ':'SOM Ant','HL Mercado':'HL Ant','HL CMQ':'CMQ Ant',
+                 'Supervisor':'Supervisor Ant','Promotor':'Promotor Ant',
+                 'Canal':'Canal Ant','Subcanal':'Subcanal Ant'})
     bf=dfb[['PDV','Supervisor','Promotor','Canal','Subcanal','SOM CMQ','HL Mercado','HL CMQ','HL CCU','HL OTROS']].rename(
-        columns={'SOM CMQ':'SOM Sep','HL Mercado':'HL Sep','HL CMQ':'CMQ Sep'})
+        columns={'SOM CMQ':'SOM Act','HL Mercado':'HL Act','HL CMQ':'CMQ Act'})
     combined=bf.merge(af,on='PDV',how='outer',indicator=True)
-    combined['Estado']=combined['_merge'].map({'both':'Ambos','left_only':'Solo septiembre','right_only':'Solo abril'}).astype(str)
-    combined['Δ pp']=combined['SOM Sep']-combined['SOM Abr']
+    combined['Estado']=combined['_merge'].map({'both':'Ambos','left_only':'Solo actual','right_only':'Solo anterior'}).astype(str)
+    combined['Δ pp']=combined['SOM Act']-combined['SOM Ant']
     combined.drop(columns='_merge',inplace=True)
     return combined

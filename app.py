@@ -1,4 +1,4 @@
-"""Dashboard Censo DDV | Abril / Septiembre 2026
+"""Dashboard Censo DDV | Comparaciones 2025 / 2026
 Ejecutar: streamlit run app.py
 Fuente: archivos oficiales Template Consolidado Resultados, pestaña Base HL.
 """
@@ -55,7 +55,7 @@ html, body, .stApp, .stApp *,
 
 GREEN='#0b8451'; MINT='#53c79a'; NAVY='#173a35'; ORANGE='#e09b46'; RED='#cd5360'
 CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#7186a1'}
-PERIOD = {'Abril':'ABR-26','Septiembre':'SEP-26'}
+PERIOD = {'Octubre':'OCT-25','Abril':'ABR-26','Septiembre':'SEP-26'}
 ROOT=Path(__file__).resolve().parent
 
 
@@ -83,16 +83,16 @@ def draw(df,kind='group',height=400):
     if df is None or df.empty:st.info('No hay datos con los filtros seleccionados.');return
     if kind=='market':
         fig=px.bar(df,x='Empresa',y='SOM',color='Periodo',barmode='group',text='SOM',
-            color_discrete_map={'Abril':GREEN,'Septiembre':MINT},labels={'SOM':'Share de mercado (%)'})
+            color_discrete_map={PA:GREEN,PB:MINT},labels={'SOM':'Share de mercado (%)'})
         fig.update_traces(texttemplate='%{text:.1f}%',textposition='outside')
         fig.update_yaxes(range=[0,max(10,float(df.SOM.max())*1.22)])
     elif kind=='segment':
         fig=px.bar(df,x='Segmento',y='SOM',color='Periodo',barmode='group',text='SOM',
-             color_discrete_map={'Abril':GREEN,'Septiembre':MINT},labels={'SOM':'SOM del segmento (%)'})
+             color_discrete_map={PA:GREEN,PB:MINT},labels={'SOM':'SOM del segmento (%)'})
         fig.update_traces(texttemplate='%{text:.1f}%',textposition='outside')
     elif kind=='mix':
         fig=px.bar(df,x='Segmento',y='Peso',color='Periodo',barmode='group',text='Peso',
-             color_discrete_map={'Abril':GREEN,'Septiembre':MINT},labels={'Peso':'Peso en mercado (%)'})
+             color_discrete_map={PA:GREEN,PB:MINT},labels={'Peso':'Peso en mercado (%)'})
         fig.update_traces(texttemplate='%{text:.1f}%',textposition='outside')
     elif kind=='changes':
         d=df.sort_values('Δ pp',ascending=True).dropna(subset=['Δ pp'])
@@ -105,65 +105,83 @@ def draw(df,kind='group',height=400):
     st.plotly_chart(figure(fig,height),use_container_width=True)
 
 
-@st.cache_data(show_spinner=False,max_entries=4)
-def load_both(ab,sp):
-    april=parse_censo(ab,'Abril'); september=parse_censo(sp,'Septiembre')
-    return (pd.concat([april[0],september[0]],ignore_index=True),
-            pd.concat([april[1],september[1]],ignore_index=True),
-            pd.concat([april[2],september[2]],ignore_index=True),
-            pd.concat([april[3],september[3]],ignore_index=True))
+@st.cache_data(show_spinner=False,max_entries=5)
+def load_both(bytes_a, bytes_b, period_a, period_b):
+    anterior=parse_censo(bytes_a,period_a)
+    actual=parse_censo(bytes_b,period_b)
+    return (pd.concat([anterior[0],actual[0]],ignore_index=True),
+            pd.concat([anterior[1],actual[1]],ignore_index=True),
+            pd.concat([anterior[2],actual[2]],ignore_index=True),
+            pd.concat([anterior[3],actual[3]],ignore_index=True))
 
 
 def get_files():
-    candidates = {
+    candidates={
+        'Octubre':[ROOT/'data'/'octubre_2025.xlsx', ROOT/'Template Consolidado Resultados Octubre 2025 MIO.xlsx'],
         'Abril':[ROOT/'data'/'abril_2026.xlsx',ROOT/'Template Consolidado Resultados Abril 2026(2).xlsx',ROOT/'Template Consolidado Resultados Abril 2026.xlsx'],
-        'Septiembre':[ROOT/'data'/'septiembre_2026.xlsx',ROOT/'Template Consolidado Resultados Septiembre 2026.xlsx']
+        'Septiembre':[ROOT/'data'/'septiembre_2026.xlsx',ROOT/'Template Consolidado Resultados Septiembre 2026.xlsx'],
     }
-    return {k:next((f for f in files if f.exists()),None) for k,files in candidates.items()}
+    return {k:next((file for file in options if file.exists()),None) for k,options in candidates.items()}
 
 
 st.sidebar.markdown('## 🍺 CENSO DDV')
-st.sidebar.caption('INTELIGENCIA COMERCIAL · 2026')
+st.sidebar.caption('INTELIGENCIA COMERCIAL · 2025—2026')
+PA,PB=st.sidebar.selectbox('Comparación de censos',[
+    ('Octubre','Abril'), ('Abril','Septiembre')],index=1,
+    format_func=lambda pair:f'{PERIOD[pair[0]]} vs. {PERIOD[pair[1]]}',
+    help='Elegí qué par de censos querés analizar. Todos los filtros e indicadores usan esta selección.')
+SHORT_A=PERIOD[PA]; SHORT_B=PERIOD[PB]
+PAIR_KEY=f'{PA}_{PB}'
+LABEL_A={'Octubre':'Octubre 2025','Abril':'Abril 2026','Septiembre':'Septiembre 2026'}[PA]
+LABEL_B={'Octubre':'Octubre 2025','Abril':'Abril 2026','Septiembre':'Septiembre 2026'}[PB]
+
 files=get_files()
 with st.sidebar.expander('📁 Archivos de origen',expanded=False):
-    up_apr=st.file_uploader('Abril 2026',type='xlsx',key='apr')
-    up_sep=st.file_uploader('Septiembre 2026',type='xlsx',key='sep')
-    for label,source,up in [('Abril',files['Abril'],up_apr),('Septiembre',files['Septiembre'],up_sep)]:
-        st.caption(f'{label}: '+ ('Archivo cargado' if up else (source.name if source else 'PENDIENTE')))
+    uploads={}
+    for per in ['Octubre','Abril','Septiembre']:
+        uploads[per]=st.file_uploader({'Octubre':'Octubre 2025','Abril':'Abril 2026',
+                                       'Septiembre':'Septiembre 2026'}[per],type='xlsx',key=f'upload_{per}')
+        file=files[per]
+        st.caption(f'{PERIOD[per]}: '+('Excel cargado' if uploads[per] else (file.name if file else 'Sin archivo')))
 try:
-    a_bytes=up_apr.getvalue() if up_apr else (files['Abril'].read_bytes() if files['Abril'] else None)
-    s_bytes=up_sep.getvalue() if up_sep else (files['Septiembre'].read_bytes() if files['Septiembre'] else None)
-    if a_bytes is None or s_bytes is None:
-        st.error('Se necesitan los dos censos. Adjuntalos en el panel lateral o copialos a la carpeta data/.');st.stop()
-    with st.spinner('Procesando censos oficiales y controlando volúmenes…'):
-        raw,all_seg,all_pres,all_errors=load_both(a_bytes,s_bytes)
+    sources={}
+    for per in [PA,PB]:
+        up=uploads[per]
+        sources[per]=up.getvalue() if up else (files[per].read_bytes() if files[per] else None)
+    missing=[PERIOD[per] for per in (PA,PB) if sources[per] is None]
+    if missing:
+        st.error('Faltan los censos seleccionados: '+', '.join(missing)+'. Adjuntalos en el panel lateral o copialos a data/.')
+        st.stop()
+    with st.spinner('Procesando los dos censos y validando volúmenes…'):
+        raw,all_seg,all_pres,all_errors=load_both(sources[PA],sources[PB],PA,PB)
 except Exception as exc:
-    st.error('No se pudieron cargar los templates. Revisá que ambos tengan la pestaña «Base HL».')
-    st.exception(exc);st.stop()
+    st.error('No se pudieron leer los archivos seleccionados. Verificá que correspondan al período indicado.')
+    st.exception(exc)
+    st.stop()
 
-original_a=raw[raw.Periodo=='Abril']; original_b=raw[raw.Periodo=='Septiembre']
+original_a=raw[raw.Periodo==PA];original_b=raw[raw.Periodo==PB]
 original_common=set(original_a.PDV)&set(original_b.PDV)
 
 st.sidebar.markdown('### Filtros generales')
 universe=st.sidebar.selectbox('Universo a comparar',['Universo completo','Mismos PDV en ambos censos','Solo censables (auditoría)'],
-    help='Mismos PDV: intersección por Código PDV; recomendable para comparar resultados. Solo censables: ambos períodos aplican su bandera respectiva.')
+    help='Mismos PDV: intersección por Código PDV. Solo censables: se aplica el estado de cada plantilla.')
 base=raw.copy()
 if universe=='Mismos PDV en ambos censos':base=base[base.PDV.isin(original_common)]
 elif universe=='Solo censables (auditoría)':base=base[base.Censable]
 filters={}
 for field in ['Supervisor','Promotor','Canal','Subcanal']:
     opts=sorted(base[field].dropna().unique().tolist())
-    selected=st.sidebar.multiselect(field,opts,placeholder='Todos',key=f'flt_{field}')
+    selected=st.sidebar.multiselect(field,opts,placeholder='Todos',key=f'flt_{PAIR_KEY}_{field}')
     filters[field]=selected
     if selected:base=base[base[field].isin(selected)]
 # En modo homogéneo, mantener solamente los PDV que sobreviven a los filtros
 # en ambos períodos; así no reaparecen cambios artificiales del universo.
 if universe=='Mismos PDV en ambos censos':
-    fa=set(base.loc[base.Periodo=='Abril','PDV'])
-    fb=set(base.loc[base.Periodo=='Septiembre','PDV'])
+    fa=set(base.loc[base.Periodo==PA,'PDV'])
+    fb=set(base.loc[base.Periodo==PB,'PDV'])
     base=base[base.PDV.isin(fa & fb)]
 
-a=base[base.Periodo=='Abril'];b=base[base.Periodo=='Septiembre']
+a=base[base.Periodo==PA];b=base[base.Periodo==PB]
 if a.empty and b.empty:st.warning('Los filtros dejaron ambos períodos sin registros.');st.stop()
 ma=indicadores(a);mb=indicadores(b)
 
@@ -177,28 +195,29 @@ sections=[
 page=st.sidebar.radio('Análisis',sections,label_visibility='collapsed')
 st.sidebar.caption('Fuente: volumen censado (HL), no venta facturada. Los filtros siempre recalculan los denominadores.')
 
-st.markdown('''<div class="hero"><div class="eyebrow">DISTRIBUIDORA DEL VALLE · PROCESOS DE VENTA</div>
+st.markdown(f'''<div class="hero"><div class="eyebrow">DISTRIBUIDORA DEL VALLE · PROCESOS DE VENTA</div>
 <h1>Censo de mercado | Tablero de resultados</h1>
-<p>ABRIL vs. SEPTIEMBRE 2026 · Share of Market · Distribución · Oportunidades · Planes de acción</p></div>''',unsafe_allow_html=True)
+<p>{LABEL_A.upper()} vs. {LABEL_B.upper()} · Share of Market · Distribución · Oportunidades · Planes de acción</p></div>''',unsafe_allow_html=True)
 
 if universe!='Mismos PDV en ambos censos':
-    st.caption('Universo activo: '+universe+' · Abril '+str(ma['PDV'])+' PDV · Septiembre '+str(mb['PDV'])+' PDV · '+str(len(original_common))+' clientes coinciden en la base original.')
-else:st.caption('Comparación homogénea por Código PDV · Abril '+str(ma['PDV'])+' · Septiembre '+str(mb['PDV']))
+    st.caption(f'Universo activo: {universe} · {SHORT_A}: {ma["PDV"]} PDV · {SHORT_B}: {mb["PDV"]} PDV · {len(original_common)} clientes coincidentes.')
+else:
+    st.caption(f'Comparación homogénea por Código PDV · {SHORT_A}: {ma["PDV"]} · {SHORT_B}: {mb["PDV"]}')
 
 
 def metrics_block(xa,xb):
     c1,c2,c3,c4,c5=st.columns(5)
-    c1.metric('SOM CMQ · Abril',perc(xa['SOM'],2))
-    c2.metric('SOM CMQ · Septiembre',perc(xb['SOM'],2),pp(xb['SOM']-xa['SOM']),delta_color='normal')
-    c3.metric('HL mercado · Sep',number(xb['HL mercado'],1), f"{number(xb['HL mercado']-xa['HL mercado'],1)} HL",delta_color='off')
-    c4.metric('PDV con cerveza · Sep',number(xb['PDV cerveza'],0))
-    c5.metric('DF CMQ · Sep',perc(xb['DF'],2),pp(xb['DF']-xa['DF']))
+    c1.metric(f'SOM CMQ · {SHORT_A}',perc(xa['SOM'],2))
+    c2.metric(f'SOM CMQ · {SHORT_B}',perc(xb['SOM'],2),pp(xb['SOM']-xa['SOM']),delta_color='normal')
+    c3.metric(f'HL mercado · {SHORT_B}',number(xb['HL mercado'],1), f"{number(xb['HL mercado']-xa['HL mercado'],1)} HL",delta_color='off')
+    c4.metric(f'PDV con cerveza · {SHORT_B}',number(xb['PDV cerveza'],0))
+    c5.metric(f'DF CMQ · {SHORT_B}',perc(xb['DF'],2),pp(xb['DF']-xa['DF']))
 
 
 def market_table():
-    # Plotly necesita un valor de período por fila; d['Periodo'] es una Serie.
+    # Plotly requiere una etiqueta de período por fila, no una columna completa.
     rows = []
-    for periodo, df_periodo in [('Abril', a), ('Septiembre', b)]:
+    for periodo, df_periodo in [(PA, a), (PB, b)]:
         total_mercado = float(df_periodo['HL Mercado'].sum())
         for fabricante in OWNERS:
             hl = float(df_periodo[f'HL {fabricante}'].sum())
@@ -212,7 +231,7 @@ def market_table():
 
 
 def comparison_summary():
-    return pd.DataFrame([{'Métrica':k,'Abril':ma[k],'Septiembre':mb[k],
+    return pd.DataFrame([{'Métrica':k,SHORT_A:ma[k],SHORT_B:mb[k],
              'Δ':mb[k]-ma[k]} for k in ['PDV','PDV cerveza','PDV CMQ','HL mercado','HL CMQ','HL CCU','HL OTROS','SOM','DF','DP','DF universo']])
 
 
@@ -226,29 +245,34 @@ def filtered_pres():
 
 def grouped_presence(dim,owner):
     pres=filtered_pres()
-    ap=presence_distribution(a,pres,'Abril',dim,owner)
-    bp=presence_distribution(b,pres,'Septiembre',dim,owner)
-    left=ap.rename(columns={'PDV con presencia':'PDV Abr','DF universo':'DF Abr','DP mercado':'DP Abr'})
-    right=bp.rename(columns={'PDV con presencia':'PDV Sep','DF universo':'DF Sep','DP mercado':'DP Sep'})
+    ap=presence_distribution(a,pres,PA,dim,owner)
+    bp=presence_distribution(b,pres,PB,dim,owner)
+    left=ap.rename(columns={'PDV con presencia':'PDV Ant','DF universo':'DF Ant','DP mercado':'DP Ant'})
+    right=bp.rename(columns={'PDV con presencia':'PDV Act','DF universo':'DF Act','DP mercado':'DP Act'})
     co=left.merge(right,on=dim,how='outer')
     if co.empty:return co
-    co['Δ DF pp']=co['DF Sep']-co['DF Abr'];co['Δ DP pp']=co['DP Sep']-co['DP Abr']
-    return co.sort_values('PDV Sep',ascending=False,na_position='last')
+    co['Δ DF pp']=co['DF Act']-co['DF Ant'];co['Δ DP pp']=co['DP Act']-co['DP Ant']
+    return co.sort_values('PDV Act',ascending=False,na_position='last')
 
 
 def two_segment_distributions():
     s=filtered_segments()
-    sa=segment_distribution(a,s,'Abril').rename(columns={'PDV segmento':'PDV seg Abr','PDV CMQ':'PDV CMQ Abr', 'DF':'DF Abr','DP':'DP Abr','HL segmento':'HL Abr'})
-    sb=segment_distribution(b,s,'Septiembre').rename(columns={'PDV segmento':'PDV seg Sep','PDV CMQ':'PDV CMQ Sep','DF':'DF Sep','DP':'DP Sep','HL segmento':'HL Sep'})
+    sa=segment_distribution(a,s,PA).rename(columns={'PDV segmento':'PDV seg Ant','PDV CMQ':'PDV CMQ Ant', 'DF':'DF Ant','DP':'DP Ant','HL segmento':'HL Ant'})
+    sb=segment_distribution(b,s,PB).rename(columns={'PDV segmento':'PDV seg Act','PDV CMQ':'PDV CMQ Act','DF':'DF Act','DP':'DP Act','HL segmento':'HL Act'})
     result=sa.merge(sb,on='Segmento',how='outer')
-    result['Δ DF pp']=result['DF Sep']-result['DF Abr'];result['Δ DP pp']=result['DP Sep']-result['DP Abr']
+    result['Δ DF pp']=result['DF Act']-result['DF Ant'];result['Δ DP pp']=result['DP Act']-result['DP Ant']
     return result
 
 
 def show_table(df,key='',formats=None):
     if df.empty:st.info('No hay registros para esta apertura.');return
     disp=df.copy()
-    fmt=formats or {}
+    # Mostrar nombres del período realmente seleccionado sin modificar los
+    # nombres estables de las columnas utilizadas en los cálculos.
+    names={col:(col.replace(' Ant',f' {SHORT_A}').replace(' Act',f' {SHORT_B}')
+                 .replace('Ant ',f'{SHORT_A} ').replace('Act ',f'{SHORT_B} ')) for col in disp.columns}
+    disp=disp.rename(columns=names)
+    fmt={names.get(key,key):value for key,value in (formats or {}).items()}
     try:
         style=disp.style.format({col:spec for col,spec in fmt.items() if col in disp.columns},na_rep='—')
         st.dataframe(style,use_container_width=True,hide_index=True,height=min(600,95+len(disp)*35))
@@ -268,15 +292,15 @@ if page=='📊 Resumen ejecutivo':
     with right:
         st.markdown('#### Principales indicadores')
         res=comparison_summary()
-        show_table(res,formats={'Abril':NUM,'Septiembre':NUM,'Δ':NUM})
+        show_table(res,formats={SHORT_A:NUM,SHORT_B:NUM,'Δ':NUM})
     st.markdown('#### Evolución por segmento')
-    segs=segment_summary(a,b,filtered_segments())
+    segs=segment_summary(a,b,filtered_segments(),PA,PB)
     sm=segs[segs.Segmento!='SIN CLASIFICAR']
-    plot=pd.concat([sm[['Segmento','SOM Abr']].rename(columns={'SOM Abr':'SOM'}).assign(Periodo='Abril'),
-                    sm[['Segmento','SOM Sep']].rename(columns={'SOM Sep':'SOM'}).assign(Periodo='Septiembre')])
+    plot=pd.concat([sm[['Segmento','SOM Ant']].rename(columns={'SOM Ant':'SOM'}).assign(Periodo=PA),
+                    sm[['Segmento','SOM Act']].rename(columns={'SOM Act':'SOM'}).assign(Periodo=PB)])
     draw(plot,'segment')
-    show_table(sm[['Segmento','SOM Abr','SOM Sep','Δ pp','Peso Abr','Peso Sep']],formats={'SOM Abr':PCT,'SOM Sep':PCT,'Δ pp':PP,'Peso Abr':PCT,'Peso Sep':PCT})
-    st.info(f"Lectura comercial: SOM CMQ varía {pp(mb['SOM']-ma['SOM'])}. La comparación es de dos relevamientos del mismo año, no contra año anterior.")
+    show_table(sm[['Segmento','SOM Ant','SOM Act','Δ pp','Peso Ant','Peso Act']],formats={'SOM Ant':PCT,'SOM Act':PCT,'Δ pp':PP,'Peso Ant':PCT,'Peso Act':PCT})
+    st.info(f"Lectura comercial: SOM CMQ varía {pp(mb['SOM']-ma['SOM'])} entre {LABEL_A} y {LABEL_B}. La variación entre censos no equivale a ventas facturadas.")
     if universe!='Mismos PDV en ambos censos':
         ca=indicadores(original_a[original_a.PDV.isin(original_common)])
         cb=indicadores(original_b[original_b.PDV.isin(original_common)])
@@ -290,34 +314,34 @@ elif page=='🍺 Share of Market':
     res=mt.pivot(index='Empresa',columns='Periodo',values=['HL','SOM'])
     res.columns=[' '.join(c) for c in res.columns]
     res=res.reset_index()
-    if 'SOM Septiembre' in res and 'SOM Abril' in res:res['Δ pp']=res['SOM Septiembre']-res['SOM Abril']
-    show_table(res,formats={'HL Abril':NUM,'HL Septiembre':NUM,'SOM Abril':PCT,'SOM Septiembre':PCT,'Δ pp':PP})
+    if f'SOM {PB}' in res and f'SOM {PA}' in res:res['Δ pp']=res[f'SOM {PB}']-res[f'SOM {PA}']
+    show_table(res,formats={f'HL {PA}':NUM,f'HL {PB}':NUM,f'SOM {PA}':PCT,f'SOM {PB}':PCT,'Δ pp':PP})
     st.markdown('#### Share por apertura de negocio')
     field=st.selectbox('Desglosar por',['Canal','Subcanal','Supervisor','Promotor'])
     g=tabla_grupos(a,b,field)
     l,r=st.columns([1.1,1])
-    with l:show_table(g,formats={'HL Abr':NUM,'HL Sep':NUM,'SOM Abr':PCT,'SOM Sep':PCT,'Δ pp':PP,'DF Abr':PCT,'DF Sep':PCT,'DP Abr':PCT,'DP Sep':PCT})
+    with l:show_table(g,formats={'HL Ant':NUM,'HL Act':NUM,'SOM Ant':PCT,'SOM Act':PCT,'Δ pp':PP,'DF Ant':PCT,'DF Act':PCT,'DP Ant':PCT,'DP Act':PCT})
     with r:draw(g.dropna(subset=['Δ pp']).head(22),'changes',height=max(350,min(820,len(g)*34)))
 
 elif page=='🏷️ Share of Segment':
     st.subheader('Share of Segment · peso y participación de cerveza')
     st.caption('Segmentos declarados por las columnas resumen del template: Value, Core, Core Plus, Premium y Super Premium.')
-    segs=segment_summary(a,b,filtered_segments())
+    segs=segment_summary(a,b,filtered_segments(),PA,PB)
     st.markdown('#### SOM de CMQ dentro de cada segmento')
     core=segs[segs.Segmento!='SIN CLASIFICAR']
-    bars=pd.concat([core[['Segmento','SOM Abr']].rename(columns={'SOM Abr':'SOM'}).assign(Periodo='Abril'),
-                    core[['Segmento','SOM Sep']].rename(columns={'SOM Sep':'SOM'}).assign(Periodo='Septiembre')])
+    bars=pd.concat([core[['Segmento','SOM Ant']].rename(columns={'SOM Ant':'SOM'}).assign(Periodo=PA),
+                    core[['Segmento','SOM Act']].rename(columns={'SOM Act':'SOM'}).assign(Periodo=PB)])
     draw(bars,'segment')
-    show_table(segs,formats={k:(PCT if k in ['SOM Abr','SOM Sep','Peso Abr','Peso Sep'] else PP if k=='Δ pp' else NUM) for k in segs.columns if k!='Segmento'})
+    show_table(segs,formats={k:(PCT if k in ['SOM Ant','SOM Act','Peso Ant','Peso Act'] else PP if k=='Δ pp' else NUM) for k in segs.columns if k!='Segmento'})
     st.markdown('#### Peso de cada segmento en el mercado total')
-    weights=pd.concat([core[['Segmento','Peso Abr']].rename(columns={'Peso Abr':'Peso'}).assign(Periodo='Abril'),
-                       core[['Segmento','Peso Sep']].rename(columns={'Peso Sep':'Peso'}).assign(Periodo='Septiembre')])
+    weights=pd.concat([core[['Segmento','Peso Ant']].rename(columns={'Peso Ant':'Peso'}).assign(Periodo=PA),
+                       core[['Segmento','Peso Act']].rename(columns={'Peso Act':'Peso'}).assign(Periodo=PB)])
     draw(weights,'mix',height=340)
     st.warning('Cuando los totales por segmento no reconcilian con el total oficial, se muestra un residual «SIN CLASIFICAR». No se redistribuye artificialmente entre marcas o segmentos.')
     st.markdown('#### Abrir por supervisor, promotor o canal')
     group_by=st.selectbox('Dimensión',['Supervisor','Promotor','Canal','Subcanal'],key='groupseg')
-    period=st.radio('Período',['Septiembre','Abril'],horizontal=True,key='segtime')
-    ds=b if period=='Septiembre' else a
+    period=st.radio('Período',[PB,PA],horizontal=True,key='segtime',format_func=lambda p:PERIOD[p])
+    ds=b if period==PB else a
     seg=filtered_segments()
     seg=seg[(seg.Periodo==period)&seg.PDV.isin(ds.PDV)&(seg.Segmento!='SIN CLASIFICAR')]
     if not seg.empty:
@@ -334,39 +358,39 @@ elif page=='📍 Distribución física':
     st.subheader('Distribución física · Presencia de CMQ')
     st.caption('DF total = PDV con HL CMQ > 0 / PDV con HL de cerveza > 0. Un punto de venta se cuenta una sola vez.')
     c1,c2,c3,c4=st.columns(4)
-    c1.metric('DF total Abril',perc(ma['DF'],2))
-    c2.metric('DF total Septiembre',perc(mb['DF'],2),pp(mb['DF']-ma['DF']))
-    c3.metric('PDV CMQ Sep',number(mb['PDV CMQ'],0))
-    c4.metric('DF sobre universo Sep',perc(mb['DF universo'],2))
+    c1.metric(f'DF total {SHORT_A}',perc(ma['DF'],2))
+    c2.metric(f'DF total {SHORT_B}',perc(mb['DF'],2),pp(mb['DF']-ma['DF']))
+    c3.metric(f'PDV CMQ {SHORT_B}',number(mb['PDV CMQ'],0))
+    c4.metric(f'DF sobre universo {SHORT_B}',perc(mb['DF universo'],2))
     st.markdown('#### DF por segmento · entre PDV que venden cada segmento')
     segdist=two_segment_distributions()
-    show_table(segdist[['Segmento','PDV seg Abr','PDV CMQ Abr','DF Abr','PDV seg Sep','PDV CMQ Sep','DF Sep','Δ DF pp']],
-        formats={'DF Abr':PCT,'DF Sep':PCT,'Δ DF pp':PP})
+    show_table(segdist[['Segmento','PDV seg Ant','PDV CMQ Ant','DF Ant','PDV seg Act','PDV CMQ Act','DF Act','Δ DF pp']],
+        formats={'DF Ant':PCT,'DF Act':PCT,'Δ DF pp':PP})
     st.markdown('#### Distribución física por marca y calibre')
     dimension=st.radio('Agrupar por',['Marca','Calibre'],horizontal=True,key='df_dim')
     owner=st.selectbox('Fabricante',['CMQ','CCU','OTROS','TODAS'],key='df_own')
     table=grouped_presence(dimension,owner)
-    show_table(table[[dimension,'PDV Abr','PDV Sep','DF Abr','DF Sep','Δ DF pp']] if not table.empty else table,
-        formats={'DF Abr':PCT,'DF Sep':PCT,'Δ DF pp':PP})
+    show_table(table[[dimension,'PDV Ant','PDV Act','DF Ant','DF Act','Δ DF pp']] if not table.empty else table,
+        formats={'DF Ant':PCT,'DF Act':PCT,'Δ DF pp':PP})
     st.info('Para marcas y calibres, la distribución se calcula sobre todos los PDV relevados del universo seleccionado. Es un criterio distinto de la DF por segmento.')
 
 elif page=='⚖️ Distribución ponderada':
     st.subheader('Distribución ponderada · Peso comercial de los PDV')
     st.caption('DP total = HL de mercado de los PDV con CMQ / HL total de mercado. No es lo mismo que Share of Market.')
     c1,c2,c3=st.columns(3)
-    c1.metric('DP Abril',perc(ma['DP'],2))
-    c2.metric('DP Septiembre',perc(mb['DP'],2),pp(mb['DP']-ma['DP']))
-    c3.metric('HL mercado Sep',number(mb['HL mercado']))
+    c1.metric(f'DP {SHORT_A}',perc(ma['DP'],2))
+    c2.metric(f'DP {SHORT_B}',perc(mb['DP'],2),pp(mb['DP']-ma['DP']))
+    c3.metric(f'HL mercado {SHORT_B}',number(mb['HL mercado']))
     st.markdown('#### Distribución ponderada por segmento')
     sd=two_segment_distributions()
-    show_table(sd[['Segmento','HL Abr','HL Sep','DP Abr','DP Sep','Δ DP pp']],
-        formats={'HL Abr':NUM,'HL Sep':NUM,'DP Abr':PCT,'DP Sep':PCT,'Δ DP pp':PP})
+    show_table(sd[['Segmento','HL Ant','HL Act','DP Ant','DP Act','Δ DP pp']],
+        formats={'HL Ant':NUM,'HL Act':NUM,'DP Ant':PCT,'DP Act':PCT,'Δ DP pp':PP})
     st.markdown('#### Peso de los PDV donde aparece la marca / calibre')
     dim=st.radio('Agrupar por',['Marca','Calibre'],horizontal=True,key='dp_dim')
     own=st.selectbox('Fabricante',['CMQ','CCU','OTROS','TODAS'],key='dp_own')
     table=grouped_presence(dim,own)
-    show_table(table[[dim,'PDV Abr','PDV Sep','DP Abr','DP Sep','Δ DP pp']] if not table.empty else table,
-        formats={'DP Abr':PCT,'DP Sep':PCT,'Δ DP pp':PP})
+    show_table(table[[dim,'PDV Ant','PDV Act','DP Ant','DP Act','Δ DP pp']] if not table.empty else table,
+        formats={'DP Ant':PCT,'DP Act':PCT,'Δ DP pp':PP})
     st.info('La DP por marca/calibre usa como ponderador el volumen total del PDV. Por segmento, utiliza el volumen total del segmento en el PDV.')
 
 elif page=='🔎 Marcas y calibres':
@@ -377,20 +401,20 @@ elif page=='🔎 Marcas y calibres':
     with right: owner=st.selectbox('Fabricante',['CMQ','CCU','OTROS','TODAS'],key='brand_owner')
     with third:metric=st.selectbox('Indicador',['PDV con presencia','Distribución física (%)','Distribución ponderada (%)'])
     if dim=='Segmento':
-        sd=two_segment_distributions();st.dataframe(sd,use_container_width=True,hide_index=True)
+        sd=two_segment_distributions();show_table(sd)
     else:
         table=grouped_presence(dim,owner)
         if not table.empty:
-            show_table(table,formats={'DF Abr':PCT,'DF Sep':PCT,'Δ DF pp':PP,'DP Abr':PCT,'DP Sep':PCT,'Δ DP pp':PP})
-            pairs={'PDV con presencia':('PDV Abr','PDV Sep'),
-                  'Distribución física (%)':('DF Abr','DF Sep'),
-                  'Distribución ponderada (%)':('DP Abr','DP Sep')}
+            show_table(table,formats={'DF Ant':PCT,'DF Act':PCT,'Δ DF pp':PP,'DP Ant':PCT,'DP Act':PCT,'Δ DP pp':PP})
+            pairs={'PDV con presencia':('PDV Ant','PDV Act'),
+                  'Distribución física (%)':('DF Ant','DF Act'),
+                  'Distribución ponderada (%)':('DP Ant','DP Act')}
             ca,cb=pairs[metric]
             best=table.sort_values(cb,ascending=False).head(15)
-            plotted=pd.concat([best[[dim,ca]].rename(columns={ca:'Resultado'}).assign(Periodo='Abril'),
-                               best[[dim,cb]].rename(columns={cb:'Resultado'}).assign(Periodo='Septiembre')])
+            plotted=pd.concat([best[[dim,ca]].rename(columns={ca:'Resultado'}).assign(Periodo=PA),
+                               best[[dim,cb]].rename(columns={cb:'Resultado'}).assign(Periodo=PB)])
             fig=px.bar(plotted,x=dim,y='Resultado',color='Periodo',barmode='group',
-                color_discrete_map={'Abril':GREEN,'Septiembre':MINT})
+                color_discrete_map={PA:GREEN,PB:MINT})
             fig.update_xaxes(tickangle=-35)
             st.plotly_chart(figure(fig,420),use_container_width=True)
     st.warning('No se calcula un SOM exacto por marca o calibre a partir de estas preguntas: algunos campos acumulan productos y se duplican entre presentaciones. Para ese indicador se necesita el detalle de volumen sin solapamientos.')
@@ -399,7 +423,7 @@ elif page=='👥 Equipo, canales y subcanales':
     st.subheader('Desempeño de supervisión y ejecución en la plaza')
     field=st.selectbox('Apertura',['Supervisor','Promotor','Canal','Subcanal'])
     rows=tabla_grupos(a,b,field)
-    show_table(rows,formats={'HL Abr':NUM,'HL Sep':NUM,'SOM Abr':PCT,'SOM Sep':PCT,'Δ pp':PP,'DF Abr':PCT,'DF Sep':PCT,'DP Abr':PCT,'DP Sep':PCT})
+    show_table(rows,formats={'HL Ant':NUM,'HL Act':NUM,'SOM Ant':PCT,'SOM Act':PCT,'Δ pp':PP,'DF Ant':PCT,'DF Act':PCT,'DP Ant':PCT,'DP Act':PCT})
     draw(rows.dropna(subset=['Δ pp']).head(24),'changes',height=max(350,min(950,len(rows)*33)))
     st.markdown('#### Ranking septiembre · HL competencia por grupo')
     if len(b):
@@ -426,9 +450,9 @@ elif page=='🎯 Oportunidades y 80/20':
         pr['% oportunidad acumulada']=100*pr['HL acum.']/competitor if competitor>0 else 0
         n_80=int((pr['% oportunidad acumulada']<80).sum())+1 if competitor else 0
         st.markdown(f'<div class="info">El <b>80% del volumen competidor priorizado</b> se concentra en los primeros <b>{n_80} PDV</b> de {len(pr)} candidatos ({n_80/len(pr)*100:.0f}% de la cartera candidata).</div>',unsafe_allow_html=True)
-        st.markdown('#### Ranking de clientes prioritarios · Septiembre')
-        cols=['PDV','Supervisor','Promotor','Canal','Subcanal','HL Mercado','HL CMQ','HL CCU','HL OTROS','HL competencia','SOM abril','SOM CMQ','Δ pp cliente','% oportunidad acumulada']
-        show_table(pr[cols],formats={'HL Mercado':NUM,'HL CMQ':NUM,'HL CCU':NUM,'HL OTROS':NUM,'HL competencia':NUM,'SOM abril':PCT,'SOM CMQ':PCT,'Δ pp cliente':PP,'% oportunidad acumulada':PCT})
+        st.markdown(f'#### Ranking de clientes prioritarios · {SHORT_B}')
+        cols=['PDV','Supervisor','Promotor','Canal','Subcanal','HL Mercado','HL CMQ','HL CCU','HL OTROS','HL competencia','SOM anterior','SOM CMQ','Δ pp cliente','% oportunidad acumulada']
+        show_table(pr[cols],formats={'HL Mercado':NUM,'HL CMQ':NUM,'HL CCU':NUM,'HL OTROS':NUM,'HL competencia':NUM,'SOM anterior':PCT,'SOM CMQ':PCT,'Δ pp cliente':PP,'% oportunidad acumulada':PCT})
         st.markdown('#### Concentración por promotor')
         team=pr.groupby('Promotor',as_index=False).agg(PDV=('PDV','nunique'),HL_competencia=('HL competencia','sum'))
         team=team.sort_values('HL_competencia',ascending=False)
@@ -436,9 +460,9 @@ elif page=='🎯 Oportunidades y 80/20':
             labels={'HL_competencia':'HL competencia potencial'})
         st.plotly_chart(figure(fig,max(350,len(team)*34)),use_container_width=True)
         st.download_button('⬇️ Descargar clientes candidatos (CSV)',pr.to_csv(index=False).encode('utf-8-sig'),
-            file_name='oportunidades_censo_septiembre.csv',mime='text/csv')
+            file_name=f'oportunidades_censo_{SHORT_B.lower()}.csv',mime='text/csv')
     st.markdown('#### PDV con competidor pero sin CMQ en un segmento')
-    s=filtered_segments();sp=s[(s.Periodo=='Septiembre')&(s.PDV.isin(b.PDV))]
+    s=filtered_segments();sp=s[(s.Periodo==PB)&(s.PDV.isin(b.PDV))]
     if not sp.empty:
         pivot=sp.pivot_table(index=['PDV','Segmento'],columns='Empresa',values='HL',aggfunc='sum',fill_value=0).reset_index()
         for company in OWNERS:
@@ -461,14 +485,14 @@ elif page=='🏪 Clientes y evolución':
         combined=combined[mask]
     c1,c2,c3=st.columns(3)
     c1.metric('PDV coincidentes',int((combined.Estado=='Ambos').sum()))
-    c2.metric('Solo abril',int((combined.Estado=='Solo abril').sum()))
-    c3.metric('Solo septiembre',int((combined.Estado=='Solo septiembre').sum()))
-    options=['Todos','Caída de SOM','Crecimiento de SOM','Solo abril','Solo septiembre']
+    c2.metric('Solo anterior',int((combined.Estado=='Solo anterior').sum()))
+    c3.metric('Solo actual',int((combined.Estado=='Solo actual').sum()))
+    options=['Todos','Caída de SOM','Crecimiento de SOM','Solo anterior','Solo actual']
     order=st.selectbox('Mostrar',options)
     if order=='Caída de SOM':combined=combined[combined['Δ pp']<0].sort_values('Δ pp')
     elif order=='Crecimiento de SOM':combined=combined[combined['Δ pp']>0].sort_values('Δ pp',ascending=False)
-    elif order in ['Solo abril','Solo septiembre']:combined=combined[combined.Estado==order]
-    show_table(combined,formats={'SOM Abr':PCT,'SOM Sep':PCT,'Δ pp':PP,'HL Abr':NUM,'HL Sep':NUM,'CMQ Abr':NUM,'CMQ Sep':NUM,'HL CCU':NUM,'HL OTROS':NUM})
+    elif order in ['Solo anterior','Solo actual']:combined=combined[combined.Estado==order]
+    show_table(combined,formats={'SOM Ant':PCT,'SOM Act':PCT,'Δ pp':PP,'HL Ant':NUM,'HL Act':NUM,'CMQ Ant':NUM,'CMQ Act':NUM,'HL CCU':NUM,'HL OTROS':NUM})
     st.download_button('⬇️ Descargar detalle filtrado CSV',combined.to_csv(index=False).encode('utf-8-sig'),
         file_name='detalle_clientes_censo.csv',mime='text/csv')
 
@@ -487,19 +511,20 @@ elif page=='🚀 Objetivos y PDA':
     c4.metric('% de HL rival a captar',perc(100*additional/competition if competition else 0,1))
     st.info('Modelo estático: los HL captados se restan a competencia y se suman a CMQ, manteniendo constante el mercado relevado. No representa un pronóstico de venta.')
     st.markdown('#### Plan de acción operativo · Editable')
-    if 'pda_data' not in st.session_state:
-        st.session_state.pda_data=pd.DataFrame([
+    pda_key=f'pda_data_{PAIR_KEY}'
+    if pda_key not in st.session_state:
+        st.session_state[pda_key]=pd.DataFrame([
             {'Foco':'Recuperación Core Plus','Supervisor':'','Promotor':'','PDV':'','Acción':'Revisar mix y negociar apertura','Meta HL':0.0,'Responsable':'','Fecha':'','Estado':'Pendiente'},
             {'Foco':'Recuperación Premium','Supervisor':'','Promotor':'','PDV':'','Acción':'Trabajar presencia por marca/calibre','Meta HL':0.0,'Responsable':'','Fecha':'','Estado':'Pendiente'},
             {'Foco':'PDV alto peso competencia','Supervisor':'','Promotor':'','PDV':'','Acción':'Visita y propuesta comercial','Meta HL':0.0,'Responsable':'','Fecha':'','Estado':'Pendiente'},
             {'Foco':'Calidad del censo','Supervisor':'','Promotor':'','PDV':'','Acción':'Validar PDV no censables con volumen','Meta HL':0.0,'Responsable':'','Fecha':'','Estado':'Pendiente'},
         ])
-    st.session_state.pda_data=st.data_editor(st.session_state.pda_data,num_rows='dynamic',hide_index=True,use_container_width=True,
+    st.session_state[pda_key]=st.data_editor(st.session_state[pda_key],num_rows='dynamic',hide_index=True,use_container_width=True,
         column_config={'Meta HL':st.column_config.NumberColumn('Meta HL',min_value=0.0,format='%.2f'),
                        'Estado':st.column_config.SelectboxColumn('Estado',options=['Pendiente','En ejecución','Finalizado','Bloqueado'])})
-    total_hl=st.session_state.pda_data['Meta HL'].fillna(0).sum()
+    total_hl=st.session_state[pda_key]['Meta HL'].fillna(0).sum()
     st.metric('HL planificados en acciones',number(total_hl,2))
-    st.download_button('⬇️ Descargar PDA (CSV)',st.session_state.pda_data.to_csv(index=False).encode('utf-8-sig'),
+    st.download_button('⬇️ Descargar PDA (CSV)',st.session_state[pda_key].to_csv(index=False).encode('utf-8-sig'),
         file_name='pda_censo_ddv.csv',mime='text/csv')
     st.caption('Las ediciones se conservan durante la sesión. Descargá el CSV antes de cerrar la página; para seguimiento compartido se requiere conectar almacenamiento.')
 
@@ -507,19 +532,25 @@ elif page=='🛡️ Auditoría de datos':
     st.subheader('Consistencia y calidad del censo')
     st.caption('Control de alcance, censabilidad, coincidencia entre plantillas y diferencias de segmentación.')
     c1,c2,c3,c4=st.columns(4)
-    c1.metric('PDV Abril · base completa',int(len(original_a)))
-    c2.metric('PDV Septiembre · base completa',int(len(original_b)))
+    c1.metric(f'PDV {SHORT_A} · base completa',int(len(original_a)))
+    c2.metric(f'PDV {SHORT_B} · base completa',int(len(original_b)))
     c3.metric('PDV coincidentes',len(original_common))
-    c4.metric('No censables con HL · Septiembre',indicadores(original_b)['No censables con HL'])
-    st.warning('Septiembre registra PDV no censables que igualmente declaran HL de cerveza. En filtros «Solo censables» se excluyen, pero eso cambia el universo y no debe compararse sin advertencia con abril.')
-    st.markdown('#### Estado de censabilidad · septiembre')
+    c4.metric(f'No censables con HL · {SHORT_B}',indicadores(original_b)['No censables con HL'])
+    if PB=='Septiembre':
+        st.warning('Septiembre 2026 registra PDV no censables con HL de cerveza. En el filtro «Solo censables» se excluyen; el universo resultante no equivale automáticamente al de abril.')
+    else:
+        st.info('En octubre 2025 el estado de relevamiento figura como «Relevado»; en abril 2026 el template no incluye el mismo indicador de censabilidad. Ambos censos se muestran respetando sus estados originales.')
+    st.markdown(f'#### Estado de relevamiento · {SHORT_B}')
     statuses=original_b.groupby(['Estado censo','Motivo no censo'],dropna=False,as_index=False).agg(
         PDV=('PDV','nunique'),HL_mercado=('HL Mercado','sum'))
     show_table(statuses.sort_values('PDV',ascending=False),formats={'HL_mercado':NUM})
-    st.markdown('#### PDV marcados no censables con volumen')
+    st.markdown('#### PDV no censables con volumen · período actual')
     conflicted=original_b[(~original_b.Censable)&(original_b['HL Mercado']>0)]
-    show_table(conflicted[['PDV','Supervisor','Promotor','Canal','Subcanal','Estado censo','Motivo no censo','HL Mercado','HL CMQ','HL CCU','HL OTROS']],
-        formats={'HL Mercado':NUM,'HL CMQ':NUM,'HL CCU':NUM,'HL OTROS':NUM})
+    if conflicted.empty:
+        st.success('No hay PDV con volumen marcado como no censable en el período actual.')
+    else:
+        show_table(conflicted[['PDV','Supervisor','Promotor','Canal','Subcanal','Estado censo','Motivo no censo','HL Mercado','HL CMQ','HL CCU','HL OTROS']],
+            formats={'HL Mercado':NUM,'HL CMQ':NUM,'HL CCU':NUM,'HL OTROS':NUM})
     st.markdown('#### Diferencias de conciliación en segmentos')
     if not all_errors.empty:
         seg_alerts=all_errors[all_errors.Alerta.str.contains('Diferencia por segmentos',na=False)]
@@ -532,7 +563,7 @@ elif page=='🛡️ Auditoría de datos':
 elif page=='⬇️ Descargar reportes':
     st.subheader('Descargas consolidadas')
     st.caption('Los reportes se construyen con los filtros activos del panel lateral. La base original no se modifica.')
-    segment=segment_summary(a,b,filtered_segments())
+    segment=segment_summary(a,b,filtered_segments(),PA,PB)
     teams=tabla_grupos(a,b,'Promotor')
     supervisors=tabla_grupos(a,b,'Supervisor')
     channels=tabla_grupos(a,b,'Canal')
@@ -572,12 +603,12 @@ elif page=='⬇️ Descargar reportes':
     if st.session_state.get('xls_ready',False):
         try:
             xls=generate_xlsx(tables)
-            st.download_button('⬇️ Descargar Excel completo',xls,file_name='Censo_DDV_Dashboard_Comparativo_2026.xlsx',
+            st.download_button('⬇️ Descargar Excel completo',xls,file_name=f'Censo_DDV_{SHORT_A}_vs_{SHORT_B}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',type='primary')
         except Exception as exc:st.error(f'Error generando Excel: {exc}')
     st.download_button('⬇️ Descargar PDV filtrados en CSV',base.to_csv(index=False).encode('utf-8-sig'),
          file_name='censo_ddv_pdv_filtrados.csv',mime='text/csv')
-    st.caption('Fuente: Template Consolidado Resultados Abril 2026 + Septiembre 2026 (Base HL). No incluye AA porque no hay archivos 2025.')
+    st.caption(f'Fuentes: {LABEL_A} y {LABEL_B}. Base oficial de HL. Para marca/calibre se muestra presencia, no SOM de volumen exacto.')
 
 st.divider()
-st.caption('DDV · Censo de Mercado 2026 · HL de mercado declarados en relevamiento | Sin datos históricos inventados | Indicadores recalculados por filtros')
+st.caption(f'DDV · Censo de Mercado · {SHORT_A} vs. {SHORT_B} · HL declarados en relevamiento | Indicadores recalculados por filtros')
