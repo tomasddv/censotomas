@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDV · Gestión mayorista</title>
+  <style>
+    :root {font-family:Inter,Arial,Helvetica,sans-serif;color:#121923;background:#f4f7fc;--blue:#245eea;--mint:#7acdd0;--line:#dbe4ef;--muted:#526273}
+    * {box-sizing:border-box} body {margin:0;font-size:14px} button,input,select,textarea {font:inherit;color:#111}
+    button {cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:700;background:#e6edf8;transition:.15s}
+    button:hover {filter:brightness(.97)}button:disabled{cursor:wait;opacity:.55}button.primary {background:#275ee7;color:#fff}
+    button.danger{color:#9e2222;background:#ffeded} button.min{padding:6px 10px;font-size:12px}
+    input,select,textarea {background:#fff;border:1px solid #c8d4e4;border-radius:9px;padding:10px;max-width:100%;outline-color:#356aff}
+    textarea {min-height:70px;resize:vertical}input:focus,select:focus,textarea:focus {border-color:#356aff}
+    h1,h2,h3,p {margin-top:0} h1{font-size:24px;margin:2px 0} h2{font-size:20px;margin-bottom:5px}h3{font-size:16px}
+    .top{display:flex;justify-content:space-between;gap:16px;align-items:center;background:#fff;border-bottom:1px solid var(--line);padding:17px max(22px,calc((100vw - 1320px)/2))}
+    .logo{display:flex;gap:14px;align-items:center}.mark{width:47px;height:47px;border-radius:13px;background:linear-gradient(135deg,#3157db,#79ced0);display:grid;place-items:center;color:#fff;font-weight:900;font-size:20px}
+    .eyebrow{font-size:11px;letter-spacing:2px;font-weight:900;color:#245eea}.subtitle{color:#526273;font-size:12px}
+    .tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .shell{max-width:1320px;margin:0 auto;padding:22px}.tabs{display:flex;gap:7px;overflow:auto;white-space:nowrap;padding:5px 0 18px}
+    .tabs button{background:transparent;color:#475773}.tabs button.active{background:#dce8ff;color:#1749be}
+    .notice{background:#fff9e6;border:1px solid #e9ce6b;border-radius:12px;padding:12px 15px;margin-bottom:15px;line-height:1.6}
+    .banner{background:linear-gradient(110deg,#2d57d7,#4b9fc5);padding:20px 24px;border-radius:17px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px}
+    .banner *{color:#fff}.banner p{margin:5px 0 0;opacity:.92}.banner .pill{background:#fff;color:#2345ae}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:19px}
+    .card,.panel{background:#fff;border:1px solid #dfe6f1;border-radius:16px;box-shadow:0 5px 18px rgba(18,39,74,.035)}
+    .card{padding:18px 19px}.card span{display:block;color:#526273;font-size:12px;font-weight:700}
+    .card strong{display:block;font-size:27px;margin:7px 0}.card small{color:#526273}
+    .panel{padding:20px;margin:0 0 16px}.panel-head{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:15px}
+    .panel-head h2,.panel-head h3{margin:0}.panel-head p{margin:5px 0 0;color:#526273;font-size:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+    .table-wrap{overflow:auto;max-width:100%}table{border-collapse:collapse;width:100%;white-space:nowrap;font-size:13px}
+    th,td{padding:11px 10px;border-bottom:1px solid #e8edf4;text-align:left}th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;background:#f6f8fc;color:#44566a;position:sticky;top:0}
+    td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+    tbody tr:hover{background:#f7faff}a{color:#174cb7;font-weight:600}
+    .badge{display:inline-block;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:800;white-space:nowrap;background:#edf2f9;color:#2f455b}
+    .badge.green{background:#d9f5e8;color:#086440}.badge.red{background:#ffe4e4;color:#a12121}.badge.yellow{background:#fff0be;color:#866008}
+    .badge.blue{background:#e3edff;color:#2549a9}.pbar{height:8px;border-radius:20px;background:#e9eff7;overflow:hidden;min-width:65px}
+    .pbar>i{display:block;background:linear-gradient(90deg,#3768df,#6ebdc8);height:100%;border-radius:inherit}
+    .barline{display:grid;grid-template-columns:minmax(115px,1fr) minmax(120px,2fr) 80px;gap:10px;align-items:center;padding:8px 0}
+    .muted{color:#566679}.small{font-size:12px}.empty{padding:27px;text-align:center;color:#566679;background:#f8faff;border:1px dashed #d3ddec;border-radius:12px}
+    .filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:15px}.filters input{min-width:235px}
+    .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:#29394d}
+    .form .wide{grid-column:1/-1}.form button{justify-self:start}.form .inline{display:flex;align-items:center;gap:8px}
+    .sectionhint{background:#f1f6ff;padding:12px 15px;border-left:4px solid #376ce7;border-radius:8px;margin:12px 0;color:#233851}
+    .modal{display:none;position:fixed;inset:0;background:rgba(15,25,40,.55);z-index:10;align-items:center;justify-content:center;padding:20px}
+    .modal.open{display:flex}.modal>article{width:min(900px,100%);max-height:90vh;overflow:auto;border-radius:18px;background:#fff;padding:25px}
+    .modal-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.xbtn{font-size:20px}
+    #toast{position:fixed;bottom:24px;right:24px;max-width:410px;padding:12px 15px;border-radius:12px;background:#163e80;color:#fff;z-index:20;display:none;box-shadow:0 8px 30px #2223}
+    #toast.error{background:#ad2732}#busy{display:none;position:fixed;inset:0;background:#ffffffbb;z-index:30;align-items:center;justify-content:center}
+    #busy div{padding:26px;background:#fff;border:1px solid #baccf0;border-radius:17px;box-shadow:0 12px 40px #1232;font-weight:800;color:#214694}
+    @media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}}
+    @media(max-width:600px){h1{font-size:19px}.shell{padding:12px}.top{padding:14px}.cards{gap:8px}.card{padding:13px}.card strong{font-size:21px}.form{grid-template-columns:1fr}.form .wide{grid-column:1}.panel{padding:14px}.banner{padding:16px}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="logo"><div class="mark">G</div><div>
+      <div class="eyebrow">GALAXIA · AUDITORÍA 2.4.16</div>
+      <h1>Gestión del canal mayorista</h1>
+      <div class="subtitle">Distribuidora del Valle · Volumen, topes y acciones comerciales</div>
+    </div></div>
+    <div class="tools"><label class="small">Período <select id="month" onchange="changeMonth()"></select></label>
+      <button onclick="refresh()" title="Releer la base del tablero">↻ Actualizar vista</button>
+      <button class="primary" onclick="showTab('fuentes')">Actualizar datos</button></div>
+  </header>
+  <div class="shell">
+    <div id="warnings"></div>
+    <nav id="tabs" class="tabs" aria-label="Secciones"></nav>
+    <main id="main"><div class="empty">Cargando datos del tablero…</div></main>
+  </div>
+  <div id="modal" class="modal" role="dialog" aria-modal="true"><article>
+    <div class="modal-head"><h2 id="modal-title"></h2><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div id="modal-body"></div>
+  </article></div>
+  <div id="toast"></div><div id="busy"><div id="busy-text">Procesando…</div></div>
+<script>
+const TABS=[
+  ['resumen','Resumen'],['clientes','Clientes'],['acciones','Acciones'],['topes','Topes'],
+  ['extensiones','Extensiones'],['planes','Planes de acción'],['auditoria','Auditoría'],['fuentes','Fuentes y cierres']
+];
+const state={tab:'resumen',mes:'',base:null,extra:null,status:null,actions:[],control:null,actionId:'',historicos:[],
+  autoEnCurso:false,autoPendiente:'',autoFallidos:new Set(),autoRevisados:new Set(),
+  autoAviso:'',autoErrores:{},anualBultos:null,anualTimer:null};
+const $=id=>document.getElementById(id);
+const esc=v=>String(v===null||v===undefined?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const href=v=>/^https:\/\//i.test(String(v||''))?esc(v):'#';
+const nf=(v,d=1)=>v===null||v===undefined||!isFinite(Number(v))?'—':Number(v).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=v=>v===null||v===undefined?'—':nf(v*100,1)+'%';
+const field=(name)=>esc(name);
+const badge=(t)=>{const s=String(t||'');const cl=/Excede|Rechazada|No cumple|Alerta sostenida/i.test(s)?'red':/Dentro|Cumplido|Aprobada|Finalizado/i.test(s)?'green':/Pendiente|Próximo|parcial|Solicitada|Alerta puntual/i.test(s)?'yellow':'blue';return '<span class="badge '+cl+'">'+esc(s)+'</span>';};
+const bars=(n,max)=>'<div class="pbar"><i style="width:'+Math.min(100,Math.max(0,max?100*n/max:0))+'%"></i></div>';
+function showBusy(msg){$('busy-text').textContent=msg||'Procesando…';$('busy').style.display='flex';}
+function hideBusy(){$('busy').style.display='none';}
+function toast(msg,error){const t=$('toast');t.textContent=msg;t.className=error?'error':'';t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display='none',6000);}
+function api(method,...args){return new Promise((resolve,reject)=>{
+  google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(new Error(e&&e.message?e.message:String(e))))[method](...args);
+});}
+function validarEstado(s){
+  if(!s||typeof s!=='object'||s.ok!==true||!Array.isArray(s.mesesVentas)){
+    throw new Error(s&&s.mensaje?s.mensaje:'El diagnóstico inicial no devolvió los períodos. Probá «Comprobar conexión».');
+  }
+  return {meses:s.mesesVentas,catalogos:Array.isArray(s.mesesAcciones)?s.mesesAcciones:[],fuente:[],
+    mesDefault:s.mesesVentas[0]||s.mesActual||'',mesActual:s.mesActual||'',dbUrl:s.baseUrl||'',
+    maestrosClientes:Number(s.maestrosClientes||0)};
+}
+function anteriorMes(mes){
+  const a=Number(mes.slice(0,4)),m=Number(mes.slice(5));
+  return m===1?(a-1)+'-12':a+'-'+('0'+(m-1)).slice(-2);
+}
+function mesesEnVentana(mes){
+  const salida=[];let actual=mes;
+  for(let i=0;i<3;i++){salida.unshift(actual);actual=anteriorMes(actual);}
+  return salida;
+}
+function mesesParaFiltro(status){
+  const existentes=new Set(status.meses||[]);
+  let mes=status.mesActual||status.mesDefault;
+  for(let i=0;i<36&&mes>='2025-05';i++){existentes.add(mes);mes=anteriorMes(mes);}
+  return [...existentes].sort().reverse();
+}
+function formObject(id){return Object.fromEntries(new FormData($(id)).entries());}
+function openModal(title,html){$('modal-title').textContent=title;$('modal-body').innerHTML=html;$('modal').classList.add('open');}
+function closeModal(){$('modal').classList.remove('open');}
+function renderTabs(){$('tabs').innerHTML=TABS.map(t=>'<button class="'+(state.tab===t[0]?'active':'')+'" onclick="showTab(\''+t[0]+'\')">'+esc(t[1])+'</button>').join('');}
+function showTab(id){state.tab=id;renderTabs();render();if(id==='fuentes'&&state.status){cargarBitacora();consultarProgresoBultos();}window.scrollTo({top:0,behavior:'smooth'});}
+async function cargarBitacora(){
+  try{const datos=await api('getRegistroControl');if(state.status&&Array.isArray(datos)){state.status.fuente=datos;if(state.tab==='fuentes')renderFuentes();}}
+  catch(e){toast('No se pudo leer la bitácora: '+e.message,true);}
+}
+async function init(){await refresh();}
+async function setup(){showBusy('Creando la base privada del tablero…');
+  try{await api('configurarProyecto');toast('Base creada. Ahora importá maestros, acciones y ventas.');await refresh();if(state.status)showTab('fuentes');}
+  catch(e){toast(e.message,true);}finally{hideBusy();}
+}
+async function refresh(opciones){
+  if(!opciones){state.autoRevisados.clear();state.autoFallidos.clear();state.autoErrores={};}
+  showBusy('Cargando '+(state.mes||'')+'…');
+  try{
+    // Usa el método de diagnóstico, que ya respondió correctamente en producción.
+    const status=validarEstado(await api('diagnosticarProyecto'));
+    state.status=status;
+    const months=mesesParaFiltro(status);
+    if(state.mes&&/^20\d\d-(0[1-9]|1[0-2])$/.test(state.mes)&&!months.includes(state.mes)){
+      months.push(state.mes);months.sort().reverse();
+    }
+    if(!months.includes(state.mes))state.mes=months[0]||'';
+    $('month').innerHTML=months.map(m=>'<option value="'+m+'" '+(m===state.mes?'selected':'')+'>'+m+'</option>').join('');
+    if(status.meses.includes(state.mes)){
+      [state.base,state.extra]=await Promise.all([api('getTablero',state.mes),api('getComplementos',state.mes)]);
+      if(!state.base||!state.base.kpis)throw Error('getTablero no devolvió las ventas del mes '+state.mes+'.');
+      if(!state.extra||!Array.isArray(state.extra.planes))throw Error('getComplementos no devolvió el seguimiento del mes '+state.mes+'.');
+    }
+    else{state.base=null;state.extra=null;}
+    renderTabs();renderWarnings();render();if(state.tab==='fuentes')cargarBitacora();
+    if(!(opciones&&opciones.sinAuto))setTimeout(()=>asegurarVentanaAuto(state.mes),0);
+  }catch(e){
+    toast(e.message,true);state.base=null;state.extra=null;renderTabs();$('warnings').innerHTML='';
+    const faltaBase=/configurarProyecto\(\)/.test(e.message);
+    $('main').innerHTML='<div class="panel"><h2>'+(faltaBase?'Configuración inicial':'No se pudo cargar el tablero')+'</h2><p>'+esc(e.message)+'</p>'+
+      (faltaBase?'<button class="primary" onclick="setup()">Crear base de datos</button> ':'')+
+      '<button onclick="diagnosticarConexion()">Comprobar conexión</button> <button onclick="refresh()">Reintentar</button></div>';
+  }finally{hideBusy();}
+}
+/** Al cambiar el filtro, busca los tres cortes requeridos sin solicitar IDs. */
+async function asegurarVentanaAuto(mes){
+  if(state.autoEnCurso){state.autoPendiente=mes;return;}
+  if(!state.status||!state.status.maestrosClientes)return;
+  // También se revisan meses ya importados: al cerrar el mes puede haber llegado
+  // su par definitivo de HL y bultos o un anual conciliado.
+  const revisar=mesesEnVentana(mes).filter(m=>!state.autoRevisados.has(m)&&!state.autoFallidos.has(m));
+  if(!revisar.length)return;
+  state.autoEnCurso=true;state.autoPendiente='';
+  const cargados=[];
+  try{
+    for(const m of revisar){
+      state.autoAviso='Comprobando corte y bultos de '+m+' en Drive…';renderWarnings();
+      let resultado;
+      try{resultado=await api('importarHistoricoAutomatico',m);}
+      catch(e){resultado={ok:false,motivo:e.message};}
+      if(resultado&&resultado.ok){
+        state.autoRevisados.add(m);
+        if(resultado.importado||resultado.actualizado)cargados.push(m);
+        if(!state.status.meses.includes(m))state.status.meses.push(m);
+        if(resultado.aviso)state.autoErrores[m]=resultado.aviso;
+        else delete state.autoErrores[m];
+      }else{
+        state.autoFallidos.add(m);
+        state.autoErrores[m]='No se pudo importar '+m+': '+(resultado&&resultado.motivo||'Sin respuesta del servidor');
+      }
+    }
+  }finally{
+    state.autoAviso='';state.autoEnCurso=false;
+    if(cargados.length){
+      toast('Ventas y bultos históricos actualizados: '+cargados.join(', '));
+      await refresh({sinAuto:true});
+    }else renderWarnings();
+    if(state.mes!==mes||state.autoPendiente){state.autoPendiente='';setTimeout(()=>asegurarVentanaAuto(state.mes),0);}
+  }
+}
+function reintentarVentanaAuto(){
+  mesesEnVentana(state.mes).forEach(m=>{state.autoRevisados.delete(m);state.autoFallidos.delete(m);delete state.autoErrores[m];});
+  asegurarVentanaAuto(state.mes);
+}
+async function diagnosticarConexion(){
+  showBusy('Comprobando la base del tablero…');
+  try{
+    const d=await api('diagnosticarProyecto');
+    $('main').innerHTML='<div class="panel"><h2>Diagnóstico de la conexión</h2><p>'+esc(d&&d.mensaje?d.mensaje:'El diagnóstico no devolvió un resultado válido.')+'</p>'+
+      '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f7fc;padding:15px;border-radius:10px">'+esc(JSON.stringify(d||{respuesta:'vacía'},null,2))+'</pre>'+
+      '<button onclick="refresh()">Volver a cargar</button></div>';
+  }catch(e){$('main').innerHTML='<div class="panel"><h2>Error de comunicación</h2><p>'+esc(e.message)+'</p><p>Comprobá la implementación y el permiso de ejecución en Google Apps Script.</p><button onclick="refresh()">Reintentar</button></div>';}
+  finally{hideBusy();}
+}
+function changeMonth(){state.mes=$('month').value;state.control=null;refresh();}
+function aplicarMesComparacion(e){
+  e.preventDefault();
+  const mes=String($('mesComparacion').value||'').trim().replace(/[\s/]+/g,'-');
+  if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(mes)){toast('Ingresá un mes válido, por ejemplo 2026-10.',true);return;}
+  state.mes=mes;state.control=null;refresh();
+}
+function renderWarnings(){
+  const arr=state.base?state.base.avisos.slice():[];
+  if(state.autoAviso)arr.unshift(state.autoAviso);
+  arr.push(...mesesEnVentana(state.mes).filter(m=>state.autoErrores[m]).map(m=>state.autoErrores[m]));
+  $('warnings').innerHTML=arr.length?'<div class="notice">'+arr.map(a=>'• '+esc(a)).join('<br>')+'</div>':'';
+}
+function render(){
+  if(!state.base&&state.tab!=='fuentes'){
+    $('main').innerHTML='<div class="panel"><h2>Ventas de '+esc(state.mes)+' aún no disponibles</h2><p>El tablero buscará automáticamente el TXT mensual en Drive. Si no lo encuentra, lo indicará en pantalla. Las fuentes originales permanecen intactas.</p><button class="primary" onclick="reintentarVentanaAuto()">Buscar ahora</button></div>';return;
+  }
+  const routes={resumen:renderResumen,clientes:renderClientes,acciones:renderAcciones,topes:renderTopes,
+    extensiones:renderExtensiones,planes:renderPlanes,auditoria:renderAuditoria,fuentes:renderFuentes};
+  (routes[state.tab]||renderResumen)();
+}
+function heading(title,desc){return '<div class="panel-head"><div><h2>'+esc(title)+'</h2><p>'+esc(desc||'')+'</p></div></div>';}
+function card(label,val,sub){return '<div class="card"><span>'+esc(label)+'</span><strong>'+val+'</strong><small>'+esc(sub||'')+'</small></div>';}
+function renderResumen(){
+  const b=state.base,k=b.kpis,share=k.volumenHL?k.volumenComportamiento/k.volumenHL:null;
+  const comp=b.comportamientoTrimestral||{periodos:[],faltantes:[],completo:false};
+  const delta=(v)=>v===null||v===undefined||v===0?'Sin comparación':nf((k.volumenHL-v)/Math.abs(v)*100,1)+'% vs base';
+  const arr=b.clientes.filter(c=>c.tipo.startsWith('Alerta '))
+    .sort((a,b)=>(b.historial?b.historial.promedioHL:b.hl)-(a.historial?a.historial.promedioHL:a.hl)).slice(0,12);
+  const sub={};b.clientes.forEach(c=>sub[c.subcanal]=(sub[c.subcanal]||0)+c.hl);
+  const bySub=Object.entries(sub).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const mix=Object.entries(b.mix||{}).sort((a,b)=>b[1]-a[1]);
+  $('main').innerHTML=
+    '<div class="banner"><div><h2>Canal mayorista · '+esc(b.mes)+'</h2><p>Alertas CM detectadas por P95. El sufijo /ERP indica coincidencia con el maestro de clientes.</p></div>'+badge(b.ultimoCierre?'Mes histórico':'Mes abierto')+'</div>'+
+    '<div class="cards">'+card('Volumen vendido',nf(k.volumenHL,1)+' HL','Cervezas CMQ · todo DDV')+
+      card('Clientes con compra',nf(k.compradores,0),'Clientes distintos en cerveza')+
+      card('Alertas CM (P95)',nf(k.comportamiento,0),'ERP por sí solo no suma una alerta')+
+      card('Participación del grupo',pct(share),'HL de clientes con alerta CM')+'</div>'+
+    '<div class="panel">'+heading('Comportamiento mayorista · tres meses móviles',
+      'Período seleccionado '+b.mes+' → '+(comp.periodos||[]).slice().reverse().join(' / ')+'. Incluye el mes seleccionado y los dos anteriores.')+
+      (comp.completo?
+        '<div class="grid3">'+card('Alertas sostenidas',nf(k.alertasSostenidas,0),'P95 y volumen alto en al menos 2 de 3 meses')+
+          card('Alertas puntuales',nf(k.alertasPuntuales,0),'P95 sin constancia suficiente')+
+          card('Alertas CM/ERP',nf(k.alertasERP,0),'Alertas P95 que además figuran en ERP')+'</div>':
+        '<div class="notice">Todavía faltan ventas de '+esc((comp.faltantes||[]).join(', '))+'. '+
+          'El tablero intenta encontrar esos meses automáticamente en Drive. Mientras tanto se muestra por separado el P95 mensual exploratorio.</div><button onclick="reintentarVentanaAuto()">Reintentar búsqueda</button>')+
+      (b.mes===state.status.mesActual?'<p class="small muted">Atención: el mes seleccionado sigue abierto, por lo que sus volúmenes son parciales.</p>':'')+
+      '<p class="small muted" style="margin-top:12px">Indicadores: promedio mensual de HL vs P95 del subcanal, multiplicador sobre la mediana y constancia de volumen alto en 2 de 3 meses. La alerta es estadística, no una clasificación oficial de Quilmes.</p></div>'+
+    '<div class="grid2"><div class="panel">'+heading('Evolución del volumen','Comparaciones disponibles, nunca se inventan períodos faltantes.')+
+      '<div class="grid2">'+card('Mes anterior',k.prevHL===null?'Sin datos':nf(k.prevHL,1)+' HL',delta(k.prevHL))+
+        card('Mismo mes año anterior',k.aaHL===null?'Sin datos':nf(k.aaHL,1)+' HL',delta(k.aaHL))+'</div>'+
+      '<div class="sectionhint">Para comparar meses históricos es necesario importar y conservar sus cierres de venta.</div></div>'+
+    '<div class="panel">'+heading('Volumen por subcanal','Distribución de HL del período')+
+      bySub.map(x=>'<div class="barline"><span class="small">'+esc(x[0])+'</span>'+bars(x[1],bySub[0][1])+'<strong class="small">'+nf(x[1],1)+' HL</strong></div>').join('')+'</div></div>'+
+    '<div class="panel">'+heading('Mix de familias comerciales','M1 Quilmes, M2 Brahma, Above Core Stella / Andes Origen / Corona y otras marcas.')+
+      '<div class="grid2">'+mix.map(x=>'<div class="barline"><span class="small">'+esc(x[0])+'</span>'+bars(x[1],k.volumenHL)+'<strong class="small">'+nf(x[1],1)+' HL</strong></div>').join('')+'</div></div>'+
+    '<div class="panel">'+heading('Clientes con alerta CM','Sólo clientes que alcanzan el P95. El sufijo /ERP indica una coincidencia adicional con el ERP.')+
+      '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Subcanal</th><th>Clasificación</th><th class="num">HL</th><th class="num">SKU</th><th class="num">Top 3 SKU</th><th></th></tr></thead><tbody>'+
+      arr.map(c=>'<tr><td>'+esc(c.codigo)+' · '+esc(c.razon)+'</td><td>'+esc(c.subcanal)+'</td><td>'+badge(c.tipo)+'</td><td class="num">'+nf(c.hl,1)+'</td><td class="num">'+nf(c.sku,0)+'</td><td class="num">'+pct(c.participacionTop3)+'</td><td><button class="min" onclick="detail(\''+c.codigo+'\')">Ver</button></td></tr>').join('')+
+      '</tbody></table></div><p class="small muted">El percentil configurable no transforma automáticamente al cliente en mayorista oficial: es una señal para auditar.</p></div>';
+}
+function renderClientes(){
+  $('main').innerHTML='<div class="panel">'+heading('Análisis por cliente','Por defecto se muestran sólo alertas CM (P95). Elegí «Todos los clientes» para consultar el resto, incluidos los ERP sin alerta.')+
+    '<div class="filters"><input id="clientSearch" placeholder="Buscar cliente o subcanal…" oninput="drawClients()">'+
+    '<select id="clientType" onchange="drawClients()"><option value="alertas">Solo alertas CM (P95)</option><option value="todos">Todos los clientes</option><option>Alerta sostenida CM</option><option>Alerta sostenida CM/ERP</option><option>Alerta puntual CM</option><option>Alerta puntual CM/ERP</option><option>Alerta mensual CM</option><option>Alerta mensual CM/ERP</option><option>ERP sin alerta CM</option><option>Comportamiento habitual</option></select>'+
+    '<label class="small"><input id="onlyConcentration" type="checkbox" onchange="drawClients()"> Top 3 SKU ≥80%</label></div>'+
+    '<p id="clientCount" class="small muted"></p><div id="clientsTable" class="table-wrap"></div></div>';
+  drawClients();
+}
+function drawClients(){
+  const q=($('clientSearch')&&$('clientSearch').value||'').toUpperCase(),type=$('clientType').value,only=$('onlyConcentration').checked;
+  const arr=state.base.clientes.filter(c=>(!q||(c.codigo+' '+c.razon+' '+c.fantasia+' '+c.subcanal).toUpperCase().includes(q))&&
+    (type==='todos'||type==='alertas'&&c.tipo.startsWith('Alerta ')||c.tipo===type)&&(!only||c.participacionTop3>=.8));
+  if(type==='alertas')arr.sort((a,b)=>(b.historial?b.historial.promedioHL:b.hl)-(a.historial?a.historial.promedioHL:a.hl));
+  $('clientCount').textContent=arr.length+' clientes encontrados (se muestran hasta 300).';
+  $('clientsTable').innerHTML='<table><thead><tr><th>Código y razón social</th><th>Subcanal</th><th>Tipo</th><th class="num">HL</th><th class="num">Bultos</th><th class="num">Prom. 3m HL</th><th class="num">Vs. mediana</th><th>Constancia</th><th class="num">SKU</th><th class="num">Top 3</th><th></th></tr></thead><tbody>'+
+    arr.slice(0,300).map(c=>'<tr><td>'+esc(c.codigo)+' · '+esc(c.razon)+'</td><td>'+esc(c.subcanal)+'</td><td>'+badge(c.tipo)+'</td><td class="num">'+nf(c.hl,2)+'</td><td class="num">'+nf(c.bultos,1)+'</td>'+
+      '<td class="num">'+(c.historial?nf(c.historial.promedioHL,1):'—')+'</td><td class="num">'+(c.historial&&c.historial.multiplicador!==null?nf(c.historial.multiplicador,1)+'×':'—')+'</td>'+
+      '<td>'+(c.historial?c.historial.mesesAltos+'/3 meses':'Pendiente')+'</td><td class="num">'+nf(c.sku,0)+'</td><td class="num">'+pct(c.participacionTop3)+'</td><td><button class="min" onclick="detail(\''+c.codigo+'\')">Detalle</button></td></tr>').join('')+'</tbody></table>';
+}
+async function detail(code){
+  showBusy('Cargando cliente '+code+'…');
+  try{
+    const d=await api('getClienteDetalle',state.mes,code);
+    const encontrado=state.base.clientes.find(c=>c.codigo===code),h=encontrado&&encontrado.historial;
+    const meses=state.base.comportamientoTrimestral&&state.base.comportamientoTrimestral.periodos||[];
+    const desglose=h&&Array.isArray(h.volumenes)?meses.map((m,i)=>esc(m)+': '+nf(h.volumenes[i],1)+' HL').join(' · '):'';
+    openModal((d.cliente.razon||'Cliente')+' · '+code,
+      '<p class="muted">'+esc(d.cliente.subcanal||'')+' · '+nf(d.total,2)+' HL</p>'+
+      (h?'<div class="sectionhint"><strong>Comportamiento mayorista · mes seleccionado y dos anteriores</strong><br>'+desglose+'<br>Promedio: '+nf(h.promedioHL,1)+' HL · P95: '+nf(h.p95HL,1)+' HL · Mediana: '+nf(h.medianaHL,1)+' HL · Multiplicador: '+(h.multiplicador===null?'—':nf(h.multiplicador,1)+'×')+' · Constancia: '+h.mesesAltos+'/3 meses · Compras: '+h.mesesConCompra+'/3 meses.'+(h.p95HL===null?' <strong>Muestra insuficiente para P95 de este subcanal.</strong>':'')+'</div>':
+        '<div class="sectionhint">La comparación está pendiente: el tablero busca automáticamente los meses que faltan en Drive.</div>')+
+      '<h3>Mix de productos</h3><div class="table-wrap"><table><thead><tr><th>SKU</th><th>Descripción</th><th>Segmento</th><th class="num">HL</th><th class="num">Bultos</th></tr></thead><tbody>'+
+      d.venta.map(x=>'<tr><td>'+esc(x.sku)+'</td><td>'+esc(x.producto)+'</td><td>'+esc(x.familia+' / '+x.segmento)+'</td><td class="num">'+nf(x.hl,2)+'</td><td class="num">'+nf(x.bultos,1)+'</td></tr>').join('')+'</tbody></table></div>'+
+      '<h3 style="margin-top:22px">Negociaciones relevadas</h3>'+
+      (d.negociaciones.length?d.negociaciones.map(x=>'<div class="sectionhint">'+esc(x.detalle)+' · '+esc(x.inicio)+' → '+esc(x.fin)+'</div>').join(''):'<div class="empty">No hay negociaciones importadas para este cliente.</div>'));
+  }catch(e){toast(e.message,true);}finally{hideBusy();}
+}
+function renderAcciones(){
+  const b=state.base;
+  $('main').innerHTML='<div class="panel">'+heading('Acciones comerciales del mes','Se usa exclusivamente el snapshot de este período; no se mezclan los grupos de otro mes.')+
+    (!b.acciones.length?'<div class="empty">No se importaron acciones para este período.</div>':
+      '<div class="filters"><input id="actionSearch" placeholder="Buscar acción, grupo, calibre…" oninput="drawActions()"></div><div id="actionsTable" class="table-wrap"></div>')+'</div>';
+  if(b.acciones.length)drawActions();
+}
+function drawActions(){
+  const q=($('actionSearch').value||'').toUpperCase();
+  const a=state.base.acciones.filter(x=>(x.accion+' '+x.familia+' '+x.alcance+' '+x.nombreGrupo+' '+x.calibre).toUpperCase().includes(q));
+  $('actionsTable').innerHTML='<table><thead><tr><th>Acción</th><th>Familia / alcance</th><th>Canal</th><th>Grupo de clientes</th><th class="num">Corte 0% descuento</th><th></th></tr></thead><tbody>'+
+    a.map(x=>'<tr><td><strong>'+esc(x.accion)+'</strong></td><td>'+esc(x.familia)+'<br><span class="muted small">'+esc(x.alcance)+'</span></td><td>'+esc(x.canal)+'</td><td>'+esc(x.grupo)+' · '+esc(x.nombreGrupo)+'</td><td class="num">'+nf(x.corte,0)+' b.</td><td><button class="min" onclick="inspectAction(\''+x.accion+'\')">Control</button></td></tr>').join('')+'</tbody></table>';
+}
+async function inspectAction(id){
+  state.actionId=String(id);state.tab='topes';renderTabs();await loadControl();
+}
+async function loadControl(){
+  if(!state.actionId){renderTopes();return;}
+  showBusy('Calculando consumo por cliente y acción…');
+  try{state.control=await api('getControlAccion',state.mes,state.actionId);renderTopes();}
+  catch(e){toast(e.message,true);state.control=null;renderTopes();}finally{hideBusy();}
+}
+function renderTopes(){
+  const acts=state.base.acciones,existing=state.extra.topes||[];
+  $('main').innerHTML='<div class="panel">'+heading('Control de bultos por acción','Cupo comercial validado, consumo real y extensión aprobada. Corte a 0% es un dato independiente.')+
+    '<div class="filters"><select id="actionSelect" onchange="state.actionId=this.value;loadControl()"><option value="">Seleccionar acción</option>'+
+    acts.map(a=>'<option value="'+a.accion+'" '+(a.accion===state.actionId?'selected':'')+'>'+esc(a.accion+' · '+a.familia+' · '+a.canal)+'</option>').join('')+'</select></div>'+
+    '<div id="topesDetail"></div></div>';
+  if(!state.control||state.control.accion.accion!==state.actionId){$('topesDetail').innerHTML='<div class="empty">Elegí una acción para ver el consumo de sus clientes.</div>';return;}
+  const c=state.control,a=c.accion,cap=existing.find(x=>x.accion===state.actionId);
+  $('topesDetail').innerHTML=
+    '<div class="grid3">'+card('Corte a 0% descuento',nf(a.corte,0)+' bultos','Dato del Book / ERP')+
+      card('Cupo comercial controlado',cap?nf(cap.cupo,0)+' bultos':'Sin validar','Regla editable, con fuente')+
+      card('Clientes del grupo',nf(c.clientes.length,0),'Según snapshot de acciones')+'</div>'+
+    (c.problemasSKU.length?'<div class="notice"><strong>Precaución: cobertura incompleta</strong><br>'+c.problemasSKU.map(esc).join('<br>')+'</div>':'')+
+    '<div class="sectionhint">'+esc(c.advertencia)+'</div>'+
+    '<div class="panel-head"><h3>Registrar o ajustar cupo comercial</h3></div>'+
+    '<form id="capForm" class="form" onsubmit="saveCap(event)"><input type="hidden" name="mes" value="'+esc(state.mes)+'"><input type="hidden" name="accion" value="'+esc(a.accion)+'">'+
+    '<label>Cupo en bultos<input name="tope" type="number" min=".01" step=".01" required value="'+(cap?cap.cupo:'')+'"></label>'+
+    '<label>Validado por<input name="validadoPor" placeholder="Responsable Quilmes / región" value="'+esc(cap?cap.validado:'')+'"></label>'+
+    '<label class="wide">Fuente o fundamento<input name="fundamento" required value="'+esc(cap?cap.fundamento:'')+'" placeholder="Documento, comunicación, fecha de confirmación…"></label>'+
+    '<button class="primary">Guardar cupo</button></form>'+
+    '<div class="panel-head" style="margin-top:25px"><h3>Clientes y consumo</h3><p>Ordenado por bultos del mes</p></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th class="num">Bultos</th><th class="num">Cupo</th><th class="num">Extensión</th><th class="num">Disponible</th><th>Control</th></tr></thead><tbody>'+
+    c.clientes.slice(0,500).map(x=>'<tr><td>'+esc(x.cliente)+' · '+esc(x.razon)+'</td><td class="num">'+nf(x.bultos,1)+'</td><td class="num">'+nf(x.cupo,0)+'</td><td class="num">'+nf(x.extra,0)+'</td><td class="num">'+(x.efectivo===null||x.bultos===null?'—':nf(x.efectivo-x.bultos,1))+'</td><td>'+badge(x.estado)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+async function saveCap(e){e.preventDefault();showBusy('Guardando cupo…');
+  try{await api('guardarTopeComercial',formObject('capForm'));state.extra=await api('getComplementos',state.mes);await loadControl();toast('Cupo comercial registrado.');}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+function renderExtensiones(){
+  const ext=state.extra.extensiones,act=state.base.acciones;
+  $('main').innerHTML='<div class="grid2"><div class="panel">'+heading('Registrar extensión','Una por cliente, acción y mes. Solo Quilmes decide si se aprueba.')+
+    '<form id="extForm" class="form" onsubmit="saveExtension(event)"><input type="hidden" name="mes" value="'+esc(state.mes)+'">'+
+    '<label>Código de cliente<input name="cliente" required inputmode="numeric" placeholder="2941"></label>'+
+    '<label>Acción del snapshot<select name="accion"><option value="">Seleccionar</option>'+act.map(a=>'<option value="'+a.accion+'">'+esc(a.accion+' · '+a.familia+' · '+a.canal)+'</option>').join('')+'</select></label>'+
+    '<label class="wide">Acción original manual (para octubre u otras sobrescritas)<input name="accionManual" inputmode="numeric" placeholder="Completar solo si no aparece arriba"></label>'+
+    '<label class="wide">Código de acción de excepción, si existe<input name="accionExcepcion" inputmode="numeric" placeholder="Ej.: 330535 o 329801"></label>'+
+    '<label>Grupo de extensión<select name="grupo"><option>Core</option><option>Stella + Andes</option><option>Stella 710 x6</option><option>Corona 710</option><option>Corona 330</option><option>Otro / no identificado</option></select></label>'+
+    '<label>Estado<select name="estado"><option>Solicitada</option><option>Aprobada</option><option>Rechazada</option><option>Finalizada</option></select></label>'+
+    '<label>Cupo original (bultos)<input type="number" name="original" required step=".01" min=".01" oninput="document.querySelector(\'#extForm [name=extra]\').value=this.value"></label>'+
+    '<label>Cupo adicional (igual al original)<input type="number" name="extra" required step=".01" min=".01"></label>'+
+    '<label>Fecha de solicitud<input type="date" name="solicitud"></label><label>Fecha de respuesta<input type="date" name="respuesta"></label>'+
+    '<label class="wide">Confirmación del EDV / Quilmes<input name="edv" placeholder="Nombre, medio y respuesta"></label>'+
+    '<label class="wide">Enlace a evidencia<input name="evidencia" placeholder="Captura, mail o archivo en Drive"></label>'+
+    '<label class="wide">Observaciones<textarea name="observaciones" placeholder="El registro se conserva aunque después se sobrescriba la acción."></textarea></label>'+
+    '<button class="primary">Guardar extensión</button></form></div>'+
+    '<div class="panel">'+heading('Extensiones del mes','Historial de cambios persistido en la base.')+
+    (ext.length?'<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Acción</th><th>Estado</th><th>Adicional</th><th>Evidencia</th></tr></thead><tbody>'+
+      ext.map((x,i)=>'<tr><td>'+esc(x.cliente)+'</td><td>'+esc(x.accion)+'</td><td>'+badge(x.estado)+'</td><td>'+nf(x.extra,0)+'</td><td>'+(!x.evidencia?badge('Pendiente'):('<a target="_blank" rel="noopener noreferrer" href="'+href(x.evidencia)+'">Ver</a>'))+'</td><td><button class="min" onclick="editExtension('+i+')">Editar</button></td></tr>').join('')+'</tbody></table></div>':
+      '<div class="empty">Todavía no hay extensiones registradas en este mes.</div>')+'</div></div>';
+}
+function editExtension(i){
+  const x=state.extra.extensiones[i],form=$('extForm');
+  if(!x||!form)return;
+  for(const key of ['cliente','grupo','estado','original','extra','solicitud','respuesta','edv','evidencia','observaciones','accionExcepcion']){
+    if(form.elements[key])form.elements[key].value=x[key]||'';
+  }
+  form.elements.accion.value=state.base.acciones.some(a=>a.accion===x.accion)?x.accion:'';
+  form.elements.accionManual.value=form.elements.accion.value?'':x.accion;
+  form.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveExtension(e){e.preventDefault();showBusy('Guardando y registrando evidencia…');
+  try{const x=await api('guardarExtension',formObject('extForm'));state.extra=await api('getComplementos',state.mes);renderExtensiones();toast('Extensión guardada: '+x.estado);}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+function renderPlanes(){
+  const arr=state.extra.planes;
+  $('main').innerHTML='<div class="grid2"><div class="panel">'+heading('Nuevo plan de acción','El foco es vender; el mix sirve para descubrir oportunidades, nunca para penalizar pocas referencias.')+
+    '<form id="planForm" class="form" onsubmit="savePlan(event)"><input type="hidden" name="mes" value="'+esc(state.mes)+'">'+
+    '<label>Código cliente<input name="cliente" required inputmode="numeric"></label>'+
+    '<label>Estado<select name="estado"><option>Pendiente</option><option>En gestión</option><option>Finalizado</option><option>Cancelado</option></select></label>'+
+    '<label class="wide">Hallazgo<input name="hallazgo" placeholder="Ej.: compra concentrada en dos referencias"></label>'+
+    '<label class="wide">Plan concreto<textarea name="plan" required placeholder="Qué haremos para incrementar ventas"></textarea></label>'+
+    '<label>Objetivo adicional en HL<input name="objetivo" type="number" step=".01"></label><label>Responsable<input name="responsable"></label>'+
+    '<label>Vencimiento<input name="vencimiento" type="date"></label><label>Resultado observado<input name="resultado"></label>'+
+    '<button class="primary">Guardar plan</button></form></div>'+
+    '<div class="panel">'+heading('Seguimiento','Planes documentados en '+state.mes)+
+    (arr.length?arr.map(p=>'<div class="sectionhint"><strong>'+esc(p.cliente)+' · '+esc(p.hallazgo)+'</strong> '+badge(p.estado)+
+      '<p style="margin:7px 0">'+esc(p.plan)+'</p><div class="small">Responsable: '+esc(p.responsable||'Pendiente')+' · Meta: '+nf(p.objetivo,1)+' HL · Vence: '+esc(p.vencimiento||'—')+'</div></div>').join(''):
+      '<div class="empty">Sin planes de acción para este mes.</div>')+'</div></div>';
+}
+async function savePlan(e){e.preventDefault();showBusy('Guardando plan…');
+  try{await api('guardarPlan',formObject('planForm'));state.extra=await api('getComplementos',state.mes);renderPlanes();toast('Plan registrado.');}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+function renderAuditoria(){
+  const a=state.extra.auditoria,n=a.filter(x=>x.estado==='Cumplido').length;
+  const e=state.extra.estrategia||{};
+  const score=state.extra.nivel||{nivel:0,porcentaje:0,puntos:0};
+  $('main').innerHTML='<div class="banner"><div><h2>Evidencias · Nivel de auditoría</h2><p>'+n+' de '+a.length+' requisitos con estado «Cumplido». La calificación oficial depende de la auditoría de CMQ.</p></div>'+badge(state.extra.cerrado?'Cierre guardado':'Mes editable')+'</div>'+
+    '<div class="cards">'+card('Nivel estimado',String(score.nivel),'Según evidencias declaradas')+
+      card('Alcance de manual',String(score.porcentaje)+'%','No es una evaluación oficial')+
+      card('Puntos posibles',nf(score.puntos,1)+' / 70','Supeditado a revisión de CMQ')+
+      card('Validación regional',score.validacionRegional?'Registrada':'Pendiente','Sin validación regional no se acredita nivel 1')+'</div>'+
+    '<div class="panel">'+heading('Estrategia mayorista · '+(e.version||'Sin versión'),'Borrador editable directamente en la hoja ESTRATEGIA de la base; no equivale a una validación regional.')+
+    '<p><strong>Objetivo:</strong> '+esc(e.objetivo||'')+'</p><p><strong>Identificación:</strong> '+esc(e.identificacion||'')+'</p>'+
+    '<p><strong>Seguimiento:</strong> '+esc(e.seguimiento||'')+'</p><p><strong>Mix:</strong> '+esc(e.mix||'')+'</p>'+
+    '<p><strong>Topes:</strong> '+esc(e.topes||'')+'</p><p><strong>Validación regional:</strong> '+badge(e.validacion||'Pendiente')+' '+esc(e.validadoPor||'')+'</p></div>'+
+    '<div class="panel"><div class="notice"><strong>Importante:</strong> tener ventas y topes calculados NO acredita por sí solo el nivel 2. Se necesita estrategia alineada y validada por la región y autorización formal de excedentes.</div>'+
+    a.map((x,i)=>'<form id="audit'+i+'" class="form" onsubmit="saveAudit(event,'+i+')" style="padding:17px 0;border-bottom:1px solid #e2e9f2">'+
+      '<input type="hidden" name="mes" value="'+esc(state.mes)+'"><input type="hidden" name="requisito" value="'+esc(x.requisito)+'">'+
+      '<div class="wide"><strong>'+esc(x.requisito)+'</strong></div>'+
+      '<label>Estado<select name="estado">'+['Pendiente','En proceso','Cumplido','No cumple'].map(s=>'<option '+(s===x.estado?'selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+      '<label>Responsable<input name="responsable" value="'+esc(x.responsable)+'"></label>'+
+      '<label class="wide">Evidencia / enlace<input name="evidencia" value="'+esc(x.evidencia)+'" placeholder="Drive, acta o confirmación"></label>'+
+      '<label class="wide">Observaciones<textarea name="observaciones">'+esc(x.observaciones)+'</textarea></label>'+
+      '<button class="primary min">Guardar requisito</button></form>').join('')+'</div>';
+}
+async function saveAudit(e,i){e.preventDefault();showBusy('Guardando evidencia…');
+  try{await api('guardarAuditoria',formObject('audit'+i));state.extra=await api('getComplementos',state.mes);renderAuditoria();toast('Evidencia guardada.');}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+function renderFuentes(){
+  const s=state.status||{meses:[],catalogos:[],fuente:[]},month=state.mes||s.mesDefault||'';
+  $('main').innerHTML='<div class="panel">'+heading('Conexión y actualización','Las fuentes originales de Drive no se modifican. Cada importación escribe en la base privada del tablero.')+
+    '<div class="sectionhint">Orden inicial: 1) maestros, 2) acciones, 3) ventas, 4) negociaciones. Después usá «Actualizar ventas» durante el mes y «Acciones» al cierre.</div>'+
+    '<div class="filters"><button class="primary" onclick="syncAll()">Sincronizar datos principales</button>'+
+    '<button onclick="syncStep(\'importarMaestros\',[])">1 · Maestros</button>'+
+    '<button onclick="syncStep(\'importarAcciones\',[state.status.mesActual])">2 · Acciones actuales</button>'+
+    '<button onclick="syncStep(\'importarVentasActuales\',[])">3 · Ventas actuales</button>'+
+    '<button onclick="syncStep(\'importarNegociaciones\',[])">4 · Negociaciones</button></div>'+
+    '<p class="small muted">Si el mes actual está cerrado, la actualización de ventas no lo sobrescribe.</p>'+
+    '<div class="sectionhint"><strong>Histórico mayorista automático.</strong> ' +
+      'Al seleccionar '+esc(month)+' se utilizan '+mesesEnVentana(month).slice().reverse().join(' / ')+'. ' +
+      'Se buscan en Drive los cortes HL y bultos, sin pedir códigos de archivo. ' +
+      'Cuando llega el par definitivo de un mes anterior, se actualiza si no está cerrado. ' +
+      'Si el mes está abierto, su volumen puede ser parcial. No se convierten HL en bultos.</div>'+
+    '<div class="sectionhint"><strong>Bultos históricos desde mayo de 2025.</strong> Detectamos «ventadiaria bultos anual.txt» (mayo 2025 a octubre 2026). '+
+      'Como el archivo supera los 250 MB, se prepara por partes una sola vez, sin modificar el original. '+
+      'Los meses que tengan HL se concilian por cliente, SKU, negocio e importe neto; no se completan los que no coincidan. '+
+      'Después, los cierres mensuales nuevos se toman del par «ventadiaria [mes].txt» y «ventadiaria bultos [mes].txt».</div>'+
+    '<div class="filters"><button class="primary" onclick="iniciarBultosAnual()">Preparar histórico anual de bultos</button> '+
+      '<button onclick="consultarProgresoBultos()">Consultar avance</button></div>'+
+    '<div id="anualEstado">'+htmlEstadoBultosAnual()+'</div>'+
+    '<form class="filters" onsubmit="aplicarMesComparacion(event)"><label class="small">Mes a analizar (AAAA-MM) <input id="mesComparacion" value="'+esc(month)+'" placeholder="2026-10" required></label><button class="primary">Cargar automáticamente ese mes y los dos anteriores</button></form>'+
+    '<div class="filters"><button onclick="reintentarVentanaAuto()">Volver a buscar archivos nuevos o meses faltantes</button></div>'+
+    '<details style="margin-top:15px"><summary><strong>Importación manual excepcional (si Drive no identifica un mes)</strong></summary>'+
+    '<h3>Importar histórico de ventas</h3><p class="small muted">Sólo necesitás este formulario cuando hay varios TXT parecidos o el nombre no permite reconocer el mes. Para auditar topes históricos necesitás también el archivo de bultos.</p>'+
+    '<form id="histForm" class="form" onsubmit="importHistory(event)"><label>Mes AAAA-MM<input name="mes" value="'+esc(month)+'" required pattern="20[0-9]{2}-(0[1-9]|1[0-2])"></label>'+
+      '<label>ID archivo HL<input name="archivoHL" required placeholder="ID del TXT en Drive"></label>'+
+      '<label>ID archivo bultos (opcional)<input name="archivoBultos" placeholder="Vacío si no existe"></label>'+
+      '<label class="inline"><input type="checkbox" name="reemplazar"> Reemplazar datos históricos sin cerrar</label>'+
+      '<button class="primary">Importar ese mes</button></form>'+
+    '<div style="margin-top:12px"><button onclick="showHistorical()">Buscar TXT mensuales en Drive</button><div id="historicList"></div></div></details></div>'+
+    '<p class="small muted">Importante: verificá el par definitivo de HL/bultos ANTES de «Cerrar mes». Para meses de años diferentes, incluí el año en los nombres de ambos TXT.</p>'+
+    '<div class="grid2"><div class="panel">'+heading('Períodos disponibles','Ventas y snapshots de acciones')+
+      '<p><strong>Ventas:</strong> '+esc(s.meses.join(', ')||'Ningún mes importado')+'</p>'+
+      '<p><strong>Acciones:</strong> '+esc(s.catalogos.join(', ')||'Ningún snapshot')+'</p>'+
+      '<p><a href="'+esc(s.dbUrl||'#')+'" target="_blank" rel="noopener noreferrer">Abrir base de datos y evidencias</a></p></div>'+
+    '<div class="panel">'+heading('Cerrar mes','Congela las ventas y el archivo de acciones, sin borrar extensiones, planes ni evidencias.')+
+      '<form id="closeForm" class="form" onsubmit="closeMonth(event)"><input type="hidden" name="mes" value="'+esc(month)+'">'+
+      '<label class="wide">Observaciones<input name="observaciones" placeholder="Cierre revisado por…"></label>'+
+      '<label class="inline wide"><input type="checkbox" name="confirmarMesAbierto"> Confirmo cierre anticipado si el mes sigue abierto</label>'+
+      '<button class="danger">Cerrar '+esc(month)+'</button></form></div></div>'+
+    '<div class="panel">'+heading('Bitácora de carga','Cada operación queda fechada en la hoja CONTROL.')+
+    '<div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Mes</th><th>Fecha</th><th>Filas</th><th>Resultado</th></tr></thead><tbody>'+
+    (s.fuente||[]).map(r=>'<tr><td>'+esc(r.tipo)+'</td><td>'+esc(r.mes)+'</td><td>'+esc(r.fecha)+'</td><td>'+nf(r.filas,0)+'</td><td>'+esc(r.resultado)+'</td></tr>').join('')+'</tbody></table></div></div>';
+}
+function htmlEstadoBultosAnual(){
+  const s=state.anualBultos;
+  if(!s)return '<p class="small muted">Consultando si el histórico anual ya se preparó…</p>';
+  if(s.estado==='pendiente')return '<p class="small muted">Pendiente: iniciá la preparación del anual una sola vez.</p>';
+  const parc=s.porcentaje||0,aplicados=Object.entries(s.mesesAplicados||{});
+  const estado=s.estado==='leyendo'?'Leyendo el TXT anual':s.estado==='aplicando'?'Conciliando meses con HL':
+    s.estado==='terminado'?'Proceso anual terminado':'Proceso detenido';
+  return '<div class="sectionhint"><strong>'+esc(estado)+'</strong> · '+parc+'% del archivo leído · '+
+    nf(s.registros||0,0)+' registros · '+aplicados.length+'/18 meses revisados.'+
+    (s.error?'<p style="color:#a22027">'+esc(s.error)+' · Podés corregir el problema y pulsar de nuevo «Preparar» para reanudar.</p>':'')+
+    (s.mensaje?'<p class="small">'+esc(s.mensaje)+'</p>':'')+
+    (aplicados.length?'<details><summary>Ver conciliación de cada mes</summary><ul>'+aplicados.map(([mes,v])=>
+      '<li>'+esc(mes)+': '+esc(v)+'</li>').join('')+'</ul></details>':'')+'</div>';
+}
+async function consultarProgresoBultos(){
+  if(state.anualTimer){clearTimeout(state.anualTimer);state.anualTimer=null;}
+  try{
+    state.anualBultos=await api('getProgresoHistoricoBultos');
+    const div=$('anualEstado');if(div)div.innerHTML=htmlEstadoBultosAnual();
+    if(state.anualBultos&&['leyendo','aplicando'].includes(state.anualBultos.estado)&&state.tab==='fuentes'){
+      state.anualTimer=setTimeout(consultarProgresoBultos,20000);
+    }
+  }catch(e){const div=$('anualEstado');if(div)div.textContent='No se pudo consultar el avance: '+e.message;}
+}
+async function iniciarBultosAnual(){
+  showBusy('Preparando el histórico anual. Iniciando el primer bloque…');
+  try{
+    const s=await api('iniciarHistoricoBultosAnual');state.anualBultos=s;
+    const div=$('anualEstado');if(div)div.innerHTML=htmlEstadoBultosAnual();
+    if(s.estado==='error')toast(s.error||'El proceso anual no pudo comenzar.',true);
+    else toast(s.estado==='terminado'?'El anual ya está preparado.':'La carga anual empezó en segundo plano. Podés seguir usando el tablero.');
+  }catch(e){toast(e.message,true);}finally{hideBusy();consultarProgresoBultos();}
+}
+async function syncStep(method,args){
+  showBusy('Procesando '+method+'…');
+  try{const result=await api(method,...args);toast('Actualización correcta: '+JSON.stringify(result).slice(0,130));await refresh();}
+  catch(e){toast(e.message,true);}finally{hideBusy();}
+}
+async function syncAll(){
+  showBusy('Actualizando maestros, acciones, ventas y negociaciones…');
+  const steps=[['importarMaestros',[]],['importarAcciones',[state.status.mesActual]],['importarVentasActuales',[]],['importarNegociaciones',[]]];
+  try{for(const s of steps){$('busy-text').textContent='Ejecutando '+s[0]+'…';await api(s[0],...s[1]);}
+    toast('Se completaron las cuatro fuentes.');await refresh();}
+  catch(e){toast('Se detuvo la carga: '+e.message,true);await refresh();}finally{hideBusy();}
+}
+async function showHistorical(){
+  showBusy('Buscando archivos mensuales…');
+  try{state.historicos=await api('listarHistoricos');
+    $('historicList').innerHTML='<div class="table-wrap"><table><thead><tr><th>Archivo</th><th>MB</th><th>Actualizado</th><th></th></tr></thead><tbody>'+
+    state.historicos.map(f=>'<tr><td>'+esc(f.name)+'</td><td>'+nf(f.mb,1)+'</td><td>'+esc(f.fecha)+'</td><td><button class="min" onclick="pickHistory(\''+esc(f.id)+'\')">Usar HL</button></td></tr>').join('')+'</tbody></table></div>';
+  }catch(e){toast(e.message,true);}finally{hideBusy();}
+}
+function pickHistory(id){$('histForm').elements.archivoHL.value=id;toast('Elegido. Comprobá el mes del archivo antes de importar.');}
+async function importHistory(e){e.preventDefault();showBusy('Importando mes histórico…');
+  try{const f=formObject('histForm');f.reemplazar=$('histForm').elements.reemplazar.checked;const x=await api('importarHistorico',f);toast('Importado '+x.mes+' ('+x.registros+' filas).');await refresh();}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+async function closeMonth(e){e.preventDefault();
+  if(!confirm('¿Cerrar '+state.mes+'? Las ventas y acciones del mes quedarán protegidas contra sobrescritura.'))return;
+  showBusy('Registrando cierre…');
+  try{const f=formObject('closeForm');f.confirmarMesAbierto=$('closeForm').elements.confirmarMesAbierto.checked;await api('cerrarMes',f);state.extra=await api('getComplementos',state.mes);toast('Cierre registrado.');await refresh();}
+  catch(err){toast(err.message,true);}finally{hideBusy();}
+}
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
