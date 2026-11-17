@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 from functools import lru_cache
 import io
+import json
+from pathlib import Path
 import re
 import unicodedata
 import zipfile
@@ -14,10 +16,16 @@ RELS = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 PKG = '{http://schemas.openxmlformats.org/package/2006/relationships}'
 SEGS = ['VALUE', 'CORE', 'CORE PLUS', 'PREMIUM', 'SUPER PREMIUM', 'SIN CLASIFICAR']
 OWNERS = ['CMQ', 'CCU', 'OTROS']
+DDV_CODE = '70549'
+SEPTEMBER_PRODUCT_MAP = Path(__file__).resolve().parent / 'data' / 'septiembre_productos.json'
 
 
 def norm(value):
     if value is None: return ''
+    # El archivo final de Patagonia contiene algunas etiquetas con mojibake.
+    if 'Ã' in str(value):
+        try: value = str(value).encode('latin-1').decode('utf-8')
+        except UnicodeError: pass
     value = unicodedata.normalize('NFKD', str(value)).encode('ascii', 'ignore').decode('ascii')
     return re.sub(r'\s+', ' ', value.upper().strip())
 
@@ -161,6 +169,86 @@ def _read_rows(z, xml_name, strings):
             el.clear()
 
 
+def _parse_septiembre_oficial(z, strings, xml_name):
+    """Lee el archivo de resultados finales: una cabecera y HL por producto.
+
+    Esta fuente no contiene las columnas VOL ni el resumen de segmentos.
+    Se reconstruyen desde las 90 preguntas originales con su mapeo verificado.
+    Gancia 0.0 y Vinos Value se excluyen del mercado cervecero.
+    """
+    with SEPTEMBER_PRODUCT_MAP.open(encoding='utf-8') as f:
+        definition = json.load(f)
+    mapping = {norm(k): v for k, v in definition['productos'].items()}
+    excluded = {norm(k) for k in definition['excluidos']}
+    it = _read_rows(z, xml_name, strings)
+    _, header = next(it)
+    cols = []
+    for index, title in header.items():
+        if index < 19: continue
+        key = norm(title)
+        if key not in mapping:
+            raise ValueError(f'Pregunta no reconocida en resultados oficiales: {title}')
+        product = mapping[key]
+        owner = norm(product['empresa'])
+        segment = norm(product['segmento'])
+        if owner not in OWNERS:
+            raise ValueError(f'Fabricante no reconocido en {title}: {owner}')
+        if segment not in SEGS: segment = 'SIN CLASIFICAR'
+        brand = marca(product['marca'])
+        cal = calibre(product['calibre']) or calibre(str(title).split('-',1)[-1]) or 'SIN DATO'
+        cols.append((index,owner,segment,brand,cal,key in excluded))
+    if len(cols) != len(mapping):
+        raise ValueError(f'La base oficial tiene {len(cols)} productos y se esperaban {len(mapping)}.')
+
+    records, segments, presence, errors = [], [], [], []
+    for row_number, vec in it:
+        if clean_id(vec.get(4)) != DDV_CODE: continue
+        pid = clean_id(vec.get(6))
+        if not pid.isdigit(): continue
+        volume = {owner: 0.0 for owner in OWNERS}
+        seg_volume = defaultdict(float)
+        found = set()
+        for index, owner, segment, brand, cal, skip in cols:
+            raw = vec.get(index)
+            if skip: continue
+            if isinstance(raw, str) and norm(raw) not in {'', '0', 'NULL'}:
+                try: float(raw)
+                except ValueError:
+                    errors.append((pid,f'Dato no numérico en {header[index]}: {raw}'))
+                    continue
+            value = numeric(raw)
+            if value < 0: errors.append((pid,f'HL negativos en {header[index]}'))
+            if not value: continue
+            volume[owner] += value
+            seg_volume[(owner,segment)] += value
+            if brand: found.add((owner,brand,cal,segment))
+
+        mercado = sum(volume.values())
+        rec = {'Periodo':'Septiembre','PDV':pid,
+               'Fuente':'Resultados finales Patagonia 12/11/2026',
+               'Supervisor':staff(vec.get(10),'supervisor'),
+               'Promotor':staff(vec.get(11),'promotor'),
+               'Canal':canal(vec.get(12)), 'Subcanal':subcanal(vec.get(13)),
+               'Censable':norm(vec.get(14))=='SI',
+               'Estado censo':norm(vec.get(14)), 'Motivo no censo':norm(vec.get(15)),
+               'HL CMQ':volume['CMQ'], 'HL CCU':volume['CCU'], 'HL OTROS':volume['OTROS'],
+               'HL Mercado':mercado,
+               'SOM CMQ':100*volume['CMQ']/mercado if mercado>0 else None,
+               'Fila origen':row_number}
+        records.append(rec)
+        for (owner,segment),value in seg_volume.items():
+            segments.append({'Periodo':'Septiembre','PDV':pid,'Empresa':owner,
+                             'Segmento':segment,'HL':value})
+        for owner,brand,cal,segment in found:
+            presence.append({'Periodo':'Septiembre','PDV':pid,'Empresa':owner,
+                             'Marca':brand,'Calibre':cal,'Segmento':segment})
+    if not records: raise ValueError('No se encontraron PDV de DDV (código 70549) en septiembre oficial.')
+    return (pd.DataFrame(records),
+            pd.DataFrame(segments,columns=['Periodo','PDV','Empresa','Segmento','HL']),
+            pd.DataFrame(presence,columns=['Periodo','PDV','Empresa','Marca','Calibre','Segmento']).drop_duplicates(),
+            pd.DataFrame(errors,columns=['PDV','Alerta']).assign(Periodo='Septiembre'))
+
+
 def parse_censo(file_bytes, periodo):
     """Devuelve (PDV, segmentos, presencias, auditoría).
     Los totales CMQ/CCU/OTROS provienen de las columnas VOL oficiales.
@@ -169,6 +257,11 @@ def parse_censo(file_bytes, periodo):
     """
     with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
         strs = _strings(z)
+        if periodo == 'Septiembre':
+            try: official_xml = _sheet_xml(z,'Hoja1')
+            except ValueError: official_xml = None
+            if official_xml:
+                return _parse_septiembre_oficial(z,strs,official_xml)
         # Octubre 2025 contiene una única hoja '10-2025' y sus encabezados
         # están una fila antes que los de las plantillas de 2026.
         es_octubre = periodo == 'Octubre'
@@ -220,6 +313,9 @@ def parse_censo(file_bytes, periodo):
                     if seg not in SEGS: seg = 'SIN CLASIFICAR'
                     question_cols.append((i,own,brand,cal,seg))
                 cols_ready = True
+            # La plantilla de septiembre de 2026 contiene otros distribuidores.
+            # El tablero DDV solo puede sumar el distribuidor 70549.
+            if clean_id(vec.get(4)) != DDV_CODE: continue
             raw_id = vec.get(6)
             if raw_id is None: continue
             pid = clean_id(raw_id)
@@ -228,7 +324,9 @@ def parse_censo(file_bytes, periodo):
             mercado = sum(vol.values())
             is_censable = (norm(vec.get(13)) == 'RELEVADO' if es_octubre
                            else norm(vec.get(13)) in {'SI', 'SÍ'} if periodo == 'Septiembre' else True)
-            rec = {'Periodo': periodo, 'PDV': pid, 'Supervisor': staff(vec.get(9),'supervisor'),
+            rec = {'Periodo': periodo, 'PDV': pid,
+                   'Fuente':'Template octubre 2025' if es_octubre else 'Plantilla Base HL',
+                   'Supervisor': staff(vec.get(9),'supervisor'),
                    'Promotor': staff(vec.get(10),'promotor'), 'Canal': canal(vec.get(11)),
                    'Subcanal': subcanal(vec.get(12)), 'Censable': is_censable,
                    'Estado censo': norm(vec.get(13)) if (es_octubre or periodo=='Septiembre') else 'SI',
@@ -284,6 +382,20 @@ def indicadores(df):
             'DF universo':100*con_cmq.PDV.nunique()/df.PDV.nunique() if len(df)>0 else 0,
             'No censables':int((~df.Censable).sum()),
             'No censables con HL':int((~df.Censable & (df['HL Mercado']>0)).sum())}
+
+
+def seleccionar_criterio_publicacion(df, periodo_anterior, periodo_actual):
+    """Mantiene el censo actual completo y el anterior solo para PDV vigentes.
+
+    Es el criterio de comparación confirmado para reproducir el tablero
+    oficial SEP-26 (73,5 % actual vs. 71,8 % anterior). Es intencionalmente
+    diferente del modo «Mismos PDV en ambos censos»: los PDV nuevos del
+    censo actual siguen participando del resultado actual.
+    """
+    actuales = set(df.loc[df.Periodo == periodo_actual, 'PDV'])
+    mantener = ((df.Periodo == periodo_actual) |
+                ((df.Periodo == periodo_anterior) & df.PDV.isin(actuales)))
+    return df.loc[mantener].copy()
 
 
 def tabla_grupos(dfa,dfb,field):

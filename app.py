@@ -1,6 +1,6 @@
-"""Dashboard Censo DDV | Comparaciones 2025 / 2026
+"""Dashboard Censo DDV | Comparaciones 2025 / 2026.
+Septiembre: resultados finales de Patagonia del 12/11/2026, solo DDV (70549).
 Ejecutar: streamlit run app.py
-Fuente: archivos oficiales Template Consolidado Resultados, pestaña Base HL.
 """
 from pathlib import Path
 from io import BytesIO
@@ -11,7 +11,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from censo_engine import (
-    parse_censo, indicadores, tabla_grupos, segment_summary, segment_distribution,
+    parse_censo, indicadores, seleccionar_criterio_publicacion,
+    tabla_grupos, segment_summary, segment_distribution,
     presence_distribution, priorities, pdv_changes, SEGS, OWNERS,
 )
 
@@ -56,6 +57,7 @@ html, body, .stApp, .stApp *,
 GREEN='#0b8451'; MINT='#53c79a'; NAVY='#173a35'; ORANGE='#e09b46'; RED='#cd5360'
 CMP = {'CMQ':GREEN,'CCU':ORANGE,'OTROS':'#7186a1'}
 PERIOD = {'Octubre':'OCT-25','Abril':'ABR-26','Septiembre':'SEP-26'}
+PUBLICATION_MODE='Criterio de publicación (actual completo, anterior coincidente)'
 ROOT=Path(__file__).resolve().parent
 
 
@@ -119,7 +121,8 @@ def get_files():
     candidates={
         'Octubre':[ROOT/'data'/'octubre_2025.xlsx', ROOT/'Template Consolidado Resultados Octubre 2025 MIO.xlsx'],
         'Abril':[ROOT/'data'/'abril_2026.xlsx',ROOT/'Template Consolidado Resultados Abril 2026(2).xlsx',ROOT/'Template Consolidado Resultados Abril 2026.xlsx'],
-        'Septiembre':[ROOT/'data'/'septiembre_2026.xlsx',ROOT/'Template Consolidado Resultados Septiembre 2026.xlsx'],
+        'Septiembre':[ROOT/'data'/'septiembre_2026_oficial.xlsx',ROOT/'data'/'septiembre_2026.xlsx',
+                      ROOT/'Template Consolidado Resultados Septiembre 2026.xlsx'],
     }
     return {k:next((file for file in options if file.exists()),None) for k,options in candidates.items()}
 
@@ -161,10 +164,20 @@ except Exception as exc:
 
 original_a=raw[raw.Periodo==PA];original_b=raw[raw.Periodo==PB]
 original_common=set(original_a.PDV)&set(original_b.PDV)
+septiembre_oficial=(PB=='Septiembre' and
+    original_b['Fuente'].eq('Resultados finales Patagonia 12/11/2026').all())
+if PB=='Septiembre':
+    if septiembre_oficial:
+        st.sidebar.success('SEP-26 · Resultados finales 12/11 · DDV 70549')
+    else:
+        st.sidebar.warning('SEP-26 · Plantilla anterior, no resultados finales 12/11')
 
 st.sidebar.markdown('### Filtros generales')
-universe=st.sidebar.selectbox('Universo a comparar',['Universo completo','Mismos PDV en ambos censos','Solo censables (auditoría)'],
-    help='Mismos PDV: intersección por Código PDV. Solo censables: se aplica el estado de cada plantilla.')
+universe=st.sidebar.selectbox('Universo a comparar',[
+    PUBLICATION_MODE,'Universo completo','Mismos PDV en ambos censos','Solo censables (auditoría)'],
+    help=('Publicación: mantiene todos los PDV actuales y solo los anteriores que siguen en el censo actual. '
+          'Universo completo: todos los PDV de cada censo. Mismos PDV: intersección en ambos. '
+          'Solo censables: filtra por el estado de cada fuente.'))
 base=raw.copy()
 if universe=='Mismos PDV en ambos censos':base=base[base.PDV.isin(original_common)]
 elif universe=='Solo censables (auditoría)':base=base[base.Censable]
@@ -180,35 +193,48 @@ if universe=='Mismos PDV en ambos censos':
     fa=set(base.loc[base.Periodo==PA,'PDV'])
     fb=set(base.loc[base.Periodo==PB,'PDV'])
     base=base[base.PDV.isin(fa & fb)]
+elif universe==PUBLICATION_MODE:
+    base=seleccionar_criterio_publicacion(base,PA,PB)
 
 a=base[base.Periodo==PA];b=base[base.Periodo==PB]
 if a.empty and b.empty:st.warning('Los filtros dejaron ambos períodos sin registros.');st.stop()
 ma=indicadores(a);mb=indicadores(b)
+publication_mode=(universe==PUBLICATION_MODE)
 
 st.sidebar.divider()
 sections=[
 '📊 Resumen ejecutivo','🍺 Share of Market','🏷️ Share of Segment',
 '📍 Distribución física','⚖️ Distribución ponderada','🔎 Marcas y calibres',
 '👥 Equipo, canales y subcanales','🎯 Oportunidades y 80/20',
-'🏪 Clientes y evolución','🚀 Objetivos y PDA','🛡️ Auditoría de datos','⬇️ Descargar reportes'
+'🏪 Clientes y evolución','🚀 Objetivos y PDA','✅ Seguimiento de planes',
+'🛡️ Auditoría de datos','⬇️ Descargar reportes'
 ]
 page=st.sidebar.radio('Análisis',sections,label_visibility='collapsed')
-st.sidebar.caption('Fuente: volumen censado (HL), no venta facturada. Los filtros siempre recalculan los denominadores.')
+st.sidebar.caption('Solo DDV (código 70549). HL censados; los filtros recalculan numeradores y denominadores.')
 
 st.markdown(f'''<div class="hero"><div class="eyebrow">DISTRIBUIDORA DEL VALLE · PROCESOS DE VENTA</div>
-<h1>Censo de mercado | Tablero de resultados</h1>
-<p>{LABEL_A.upper()} vs. {LABEL_B.upper()} · Share of Market · Distribución · Oportunidades · Planes de acción</p></div>''',unsafe_allow_html=True)
+<h1>{'Censo de mercado | Seguimiento comercial' if page=='✅ Seguimiento de planes' else 'Censo de mercado | Tablero de resultados'}</h1>
+<p>{'Planes basados en septiembre 2026 · DDV 70549' if page=='✅ Seguimiento de planes' else LABEL_A.upper()+' vs. '+LABEL_B.upper()+' · Share of Market · Distribución · Oportunidades · Planes de acción'}</p></div>''',unsafe_allow_html=True)
 
-if universe!='Mismos PDV en ambos censos':
+if publication_mode:
+    st.caption(f'Criterio de publicación · {SHORT_B}: universo completo DDV ({mb["PDV"]} PDV) · '
+               f'{SHORT_A}: solo PDV presentes en el censo actual ({ma["PDV"]} PDV). '
+               'Los universos comparados son distintos.')
+elif universe!='Mismos PDV en ambos censos':
     st.caption(f'Universo activo: {universe} · {SHORT_A}: {ma["PDV"]} PDV · {SHORT_B}: {mb["PDV"]} PDV · {len(original_common)} clientes coincidentes.')
 else:
     st.caption(f'Comparación homogénea por Código PDV · {SHORT_A}: {ma["PDV"]} · {SHORT_B}: {mb["PDV"]}')
+if septiembre_oficial:
+    st.caption('Septiembre 2026: resultados finales del 12/11 · 90 preguntas en HL · sin Gancia 0.0 ni Vinos Value.')
 
 
 def metrics_block(xa,xb):
     c1,c2,c3,c4,c5=st.columns(5)
-    c1.metric(f'SOM CMQ · {SHORT_A}',perc(xa['SOM'],2))
-    c2.metric(f'SOM CMQ · {SHORT_B}',perc(xb['SOM'],2),pp(xb['SOM']-xa['SOM']),delta_color='normal')
+    dec=1 if publication_mode else 2
+    change=(f'{"+" if xb["SOM"]>=xa["SOM"] else ""}{number(xb["SOM"]-xa["SOM"],1)} pp' if publication_mode
+            else pp(xb['SOM']-xa['SOM']))
+    c1.metric(f'SOM CMQ · {SHORT_A}',perc(xa['SOM'],dec))
+    c2.metric(f'SOM CMQ · {SHORT_B}',perc(xb['SOM'],dec),change,delta_color='normal')
     c3.metric(f'HL mercado · {SHORT_B}',number(xb['HL mercado'],1), f"{number(xb['HL mercado']-xa['HL mercado'],1)} HL",delta_color='off')
     c4.metric(f'PDV con cerveza · {SHORT_B}',number(xb['PDV cerveza'],0))
     c5.metric(f'DF CMQ · {SHORT_B}',perc(xb['DF'],2),pp(xb['DF']-xa['DF']))
@@ -528,6 +554,10 @@ elif page=='🚀 Objetivos y PDA':
         file_name='pda_censo_ddv.csv',mime='text/csv')
     st.caption('Las ediciones se conservan durante la sesión. Descargá el CSV antes de cerrar la página; para seguimiento compartido se requiere conectar almacenamiento.')
 
+elif page=='✅ Seguimiento de planes':
+    from pda_tab import render as render_pda
+    render_pda(ROOT)
+
 elif page=='🛡️ Auditoría de datos':
     st.subheader('Consistencia y calidad del censo')
     st.caption('Control de alcance, censabilidad, coincidencia entre plantillas y diferencias de segmentación.')
@@ -536,8 +566,38 @@ elif page=='🛡️ Auditoría de datos':
     c2.metric(f'PDV {SHORT_B} · base completa',int(len(original_b)))
     c3.metric('PDV coincidentes',len(original_common))
     c4.metric(f'No censables con HL · {SHORT_B}',indicadores(original_b)['No censables con HL'])
+    if publication_mode:
+        anterior_coincidente=original_a[original_a.PDV.isin(original_common)]
+        anterior_sin_actual=original_a[~original_a.PDV.isin(original_common)]
+        full_previous=indicadores(original_a)
+        same_previous=indicadores(anterior_coincidente)
+        st.markdown('#### Conciliación del criterio de publicación · sin filtros')
+        c1,c2,c3=st.columns(3)
+        c1.metric(f'SOM {SHORT_A} completo',perc(full_previous['SOM'],2))
+        c2.metric(f'SOM {SHORT_A} coincidente',perc(same_previous['SOM'],2))
+        c3.metric('PDV anteriores fuera del actual',len(anterior_sin_actual))
+        st.caption('El modo de publicación mantiene el censo actual completo. Para el anterior solo conserva los PDV presentes también en el actual. Este es el criterio que reproduce el tablero oficial de septiembre; los demás modos permiten auditar los universos originales.')
+        if not anterior_sin_actual.empty:
+            st.markdown(f'#### PDV de {SHORT_A} que no están en {SHORT_B}')
+            campos=['PDV','Supervisor','Promotor','Canal','Subcanal','HL CMQ','HL CCU','HL OTROS','HL Mercado','SOM CMQ']
+            show_table(anterior_sin_actual[campos].sort_values('HL Mercado',ascending=False),
+                       formats={'HL CMQ':NUM,'HL CCU':NUM,'HL OTROS':NUM,'HL Mercado':NUM,'SOM CMQ':PCT})
+            st.download_button('⬇️ Descargar PDV excluidos del anterior (CSV)',
+                anterior_sin_actual[campos].to_csv(index=False).encode('utf-8-sig'),
+                file_name=f'PDV_{SHORT_A}_no_presentes_en_{SHORT_B}.csv',mime='text/csv')
     if PB=='Septiembre':
         st.warning('Septiembre 2026 registra PDV no censables con HL de cerveza. En el filtro «Solo censables» se excluyen; el universo resultante no equivale automáticamente al de abril.')
+        if septiembre_oficial:
+            report=indicadores(original_b)
+            report_censables=indicadores(original_b[original_b.Censable])
+            st.markdown('#### Control de cierre · Septiembre oficial (sin filtros)')
+            c1,c2,c3,c4=st.columns(4)
+            c1.metric('SOM CMQ',perc(report['SOM'],2))
+            c2.metric('HL CMQ',number(report['HL CMQ'],2))
+            c3.metric('HL CCU',number(report['HL CCU'],2))
+            c4.metric('HL Otros',number(report['HL OTROS'],2))
+            st.caption('Todos los PDV de DDV (70549), incluidos los no censables. Gancia 0.0 y Vinos Value no forman parte del mercado. El Excel de resultados finales trae HL por producto, no los subtotales VOL de la plantilla anterior.')
+            st.info(f'Comparación de universos de septiembre: universo completo = {report["PDV"]} PDV y SOM {perc(report["SOM"],2)}; solo censables = {report_censables["PDV"]} PDV y SOM {perc(report_censables["SOM"],2)}. Seleccioná el universo que corresponda al reporte oficial que quieras cotejar.')
     else:
         st.info('En octubre 2025 el estado de relevamiento figura como «Relevado»; en abril 2026 el template no incluye el mismo indicador de censabilidad. Ambos censos se muestran respetando sus estados originales.')
     st.markdown(f'#### Estado de relevamiento · {SHORT_B}')
@@ -558,7 +618,10 @@ elif page=='🛡️ Auditoría de datos':
         st.caption(f'{len(seg_alerts)} advertencias por PDV/empresa; algunas son redondeos, otras diferencias reales entre resumen y desglose.')
         st.dataframe(seg_alerts,use_container_width=True,hide_index=True,height=320)
     else:st.success('No se detectaron diferencias en la conciliación por segmento.')
-    st.info('La app usa siempre las columnas oficiales VOL CMQ., VOL CCU. y VOL OTROS para el SOM total. Para segmentos usa los totales resumidos del Excel, y expone aparte las diferencias sin imputaciones encubiertas.')
+    if septiembre_oficial:
+        st.info('En septiembre oficial el SOM, los segmentos y las presencias se reconstruyen con las 90 preguntas de producto en HL. Se excluyen Gancia 0.0 y Vinos Value. En octubre y abril se conservan los volúmenes y segmentos de sus plantillas originales.')
+    else:
+        st.info('En las plantillas de origen el SOM usa las columnas VOL CMQ., VOL CCU. y VOL OTROS. El desglose por segmentos se concilia y las diferencias se muestran aparte.')
 
 elif page=='⬇️ Descargar reportes':
     st.subheader('Descargas consolidadas')
@@ -582,6 +645,17 @@ elif page=='⬇️ Descargar reportes':
         'Subcanales':subchannels,'Oportunidades':opps,
         'Clientes':customers,'Auditoria':selected_errors,
     }
+    if publication_mode:
+        excluidos=original_a[~original_a.PDV.isin(original_common)]
+        tables['Criterio comparacion']=pd.DataFrame([
+            {'Concepto':'Censo anterior completo','Periodo':SHORT_A,
+             'PDV':len(original_a),'SOM CMQ':indicadores(original_a)['SOM']},
+            {'Concepto':'Anterior coincidente','Periodo':SHORT_A,
+             'PDV':len(original_a)-len(excluidos),'SOM CMQ':indicadores(original_a[original_a.PDV.isin(original_common)])['SOM']},
+            {'Concepto':'Actual completo','Periodo':SHORT_B,
+             'PDV':len(original_b),'SOM CMQ':indicadores(original_b)['SOM']},
+        ])
+        tables['PDV ant sin actual']=excluidos[['PDV','Supervisor','Promotor','Canal','Subcanal','HL Mercado','HL CMQ','HL CCU','HL OTROS']]
     st.markdown(f'El archivo Excel reúne **{len(tables)} hojas** y los indicadores de los dos censos.')
     @st.cache_data(show_spinner=False)
     def generate_xlsx(sets):
@@ -608,7 +682,7 @@ elif page=='⬇️ Descargar reportes':
         except Exception as exc:st.error(f'Error generando Excel: {exc}')
     st.download_button('⬇️ Descargar PDV filtrados en CSV',base.to_csv(index=False).encode('utf-8-sig'),
          file_name='censo_ddv_pdv_filtrados.csv',mime='text/csv')
-    st.caption(f'Fuentes: {LABEL_A} y {LABEL_B}. Base oficial de HL. Para marca/calibre se muestra presencia, no SOM de volumen exacto.')
+    st.caption(f'Fuentes: {LABEL_A} y {LABEL_B}. Septiembre final: HL por producto y exclusiones oficiales. Marca/calibre: indicadores de presencia.')
 
 st.divider()
 st.caption(f'DDV · Censo de Mercado · {SHORT_A} vs. {SHORT_B} · HL declarados en relevamiento | Indicadores recalculados por filtros')

@@ -1,0 +1,549 @@
+{
+  "fuente": "Template Consolidado Resultados Septiembre 2026.xlsx, Base HL, filas 2/4/5/6/7/9",
+  "excluidos": [
+    "0.0% GANCIA-TOTAL CALIBRES",
+    "VINOS VALUE-TOTAL CALIBRES"
+  ],
+  "productos": {
+    "1890 + BAJO CERO-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "VALUE",
+      "marca": "1890 + BAJO CERO",
+      "calibre": "LITRO RETORNABLE"
+    },
+    "QUILMES CLÁSICA-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "QUILMES CLÁSICA",
+      "calibre": "1 L"
+    },
+    "BRAHMA-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BRAHMA",
+      "calibre": "1 L"
+    },
+    "BUDWEISER-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BUDWEISER",
+      "calibre": "1 L"
+    },
+    "ANDES ORIGEN RUBIA-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN RUBIA",
+      "calibre": "1 L"
+    },
+    "ANDES ORIGEN ORO-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN ORO",
+      "calibre": "1 L"
+    },
+    "ANDES ORIGEN VARIEDADES-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN VARIEDADES",
+      "calibre": "1 L"
+    },
+    "STELLA ARTOIS-LITRO RETORNABLE": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "STELLA ARTOIS",
+      "calibre": "1 L"
+    },
+    "PALERMO + IGUANA-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "VALUE",
+      "marca": "PALERMO + IGUANA",
+      "calibre": "1 L"
+    },
+    "SCHNEIDER + AMSTEL-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SCHNEIDER + AMSTEL",
+      "calibre": "1 L"
+    },
+    "MILLER-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "MILLER",
+      "calibre": "1 L"
+    },
+    "IMPERIAL RUBIA-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL RUBIA",
+      "calibre": "1 L"
+    },
+    "IMPERIAL GOLDEN-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL GOLDEN",
+      "calibre": "1 L"
+    },
+    "IMPERIAL VARIEDADES-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL VARIEDADES",
+      "calibre": "1 L"
+    },
+    "HEINEKEN-LITRO RETORNABLE": {
+      "empresa": "CCU",
+      "segmento": "PREMIUM",
+      "marca": "HEINEKEN",
+      "calibre": "1 L"
+    },
+    "1890 + BAJO CERO-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "VALUE",
+      "marca": "1890 + BAJO CERO",
+      "calibre": "LATA 473CC"
+    },
+    "QUILMES CLASICA-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "QUILMES CLASICA",
+      "calibre": "LT 1/2"
+    },
+    "BRAHMA-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BRAHMA",
+      "calibre": "LT 1/2"
+    },
+    "BUDWEISER-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BUDWEISER",
+      "calibre": "LT 1/2"
+    },
+    "ANDES ORIGEN RUBIA-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN RUBIA",
+      "calibre": "LT 1/2"
+    },
+    "ANDES ORIGEN ORO-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN ORO",
+      "calibre": "LT 1/2"
+    },
+    "ANDES ORIGEN VARIEDADES-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN VARIEDADES",
+      "calibre": "LT 1/2"
+    },
+    "STELLA ARTOIS-LATA 473CC": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "STELLA ARTOIS",
+      "calibre": "LT 1/2"
+    },
+    "ISENBECK-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "VALUE",
+      "marca": "ISENBECK",
+      "calibre": "LT 1/2"
+    },
+    "SCHNEIDER + AMSTEL--LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SCHNEIDER + AMSTEL-",
+      "calibre": "LT 1/2"
+    },
+    "SCHNEIDER REMIX LIMON-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SCHNEIDER REMIX LIMON",
+      "calibre": "LT 1/2"
+    },
+    "MILLER-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "MILLER",
+      "calibre": "LT 1/2"
+    },
+    "IMPERIAL RUBIA-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL RUBIA",
+      "calibre": "LT 1/2"
+    },
+    "IMPERIAL GOLDEN-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL GOLDEN",
+      "calibre": "LT 1/2"
+    },
+    "IMPERIAL VARIEDADES-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL VARIEDADES",
+      "calibre": "LT 1/2"
+    },
+    "HEINEKEN-LATA 473CC": {
+      "empresa": "CCU",
+      "segmento": "PREMIUM",
+      "marca": "HEINEKEN",
+      "calibre": "LT 1/2"
+    },
+    "1890 + BAJO CERO-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "VALUE",
+      "marca": "1890 + BAJO CERO",
+      "calibre": "LATA 710CC"
+    },
+    "QUILMES CLASICA-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "QUILMES CLASICA",
+      "calibre": "710 cc"
+    },
+    "BRAHMA-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BRAHMA",
+      "calibre": "710 cc"
+    },
+    "BUDWEISER-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BUDWEISER",
+      "calibre": "710 cc"
+    },
+    "ANDES ORIGEN RUBIA-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "ANDES ORIGEN RUBIA",
+      "calibre": "710 cc"
+    },
+    "STELLA ARTOIS-LATA 710CC": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "STELLA ARTOIS",
+      "calibre": "710 cc"
+    },
+    "SCHNEIDER + AMSTEL-LATA 710CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SCHNEIDER + AMSTEL",
+      "calibre": "710 cc Competencia"
+    },
+    "MILLER-LATA 710CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "MILLER",
+      "calibre": "710 cc Competencia"
+    },
+    "IMPERIAL RUBIA-LATA 710CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL RUBIA",
+      "calibre": "710 cc Competencia"
+    },
+    "IMPERIAL GOLDEN-LATA 710CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "IMPERIAL GOLDEN",
+      "calibre": "710 cc Competencia"
+    },
+    "HEINEKEN-LATA 710CC": {
+      "empresa": "CCU",
+      "segmento": "PREMIUM",
+      "marca": "HEINEKEN",
+      "calibre": "710 cc Competencia"
+    },
+    "0.0% QUILMES CLASICA-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "0.0% QUILMES CLASICA",
+      "calibre": "TOTAL CALIBRES"
+    },
+    "0.0% STELLA ARTOIS-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "0.0% STELLA ARTOIS",
+      "calibre": ""
+    },
+    "0.0% CORONA-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "SUPER PREMIUM",
+      "marca": "0.0% CORONA",
+      "calibre": ""
+    },
+    "0.0% IMPERIAL-TOTAL CALIBRES": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "0.0% IMPERIAL",
+      "calibre": ""
+    },
+    "0.0% HEINEKEN-TOTAL CALIBRES": {
+      "empresa": "CCU",
+      "segmento": "PREMIUM",
+      "marca": "0.0% HEINEKEN",
+      "calibre": ""
+    },
+    "0.0% GANCIA-TOTAL CALIBRES": {
+      "empresa": "OTROS",
+      "segmento": "Sin Segmento",
+      "marca": "0.0% GANCIA",
+      "calibre": "LT 1/2"
+    },
+    "MICHELOB ULTRA-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "CORE PLUS",
+      "marca": "MICHELOB ULTRA",
+      "calibre": "LT 1/2"
+    },
+    "CORONA-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "SUPER PREMIUM",
+      "marca": "CORONA",
+      "calibre": "CORONA TC"
+    },
+    "PATAGONIA-TOTAL CALIBRES": {
+      "empresa": "CMQ",
+      "segmento": "SUPER PREMIUM",
+      "marca": "PATAGONIA",
+      "calibre": "PATAGONIA TC"
+    },
+    "361-LITRO": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "361",
+      "calibre": "LITRO"
+    },
+    "361-LATA 710 CC": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "361",
+      "calibre": "LATA 710 CC"
+    },
+    "361-LATA 473 CC": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "361",
+      "calibre": "LATA 473 CC"
+    },
+    "OTROS VALUE-TOTAL CALIBRES": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "OTROS VALUE",
+      "calibre": "TOTAL CALIBRES"
+    },
+    "VINOS VALUE-TOTAL CALIBRES": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "VINOS VALUE",
+      "calibre": "TOTAL CALIBRES"
+    },
+    "CORDOBA-LITRO": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "CORDOBA",
+      "calibre": "LITRO"
+    },
+    "CORDOBA-LATA 473 CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "CORDOBA",
+      "calibre": "LATA 473 CC"
+    },
+    "361-1,5 LTS": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "361",
+      "calibre": "1,5 LTS"
+    },
+    "SALTA-1,2 L": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "SALTA",
+      "calibre": "1,2 L"
+    },
+    "SALTA-LITRO": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "SALTA",
+      "calibre": "LITRO"
+    },
+    "SALTA-473 CC": {
+      "empresa": "CCU",
+      "segmento": "CORE PLUS",
+      "marca": "SALTA",
+      "calibre": "473 CC"
+    },
+    "NORTE-LITRO": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "NORTE",
+      "calibre": "LITRO"
+    },
+    "NORTE-473 CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "NORTE",
+      "calibre": "473 CC"
+    },
+    "ANDES REGIONAL-LITRO": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "ANDES REGIONAL",
+      "calibre": "LITRO"
+    },
+    "ANDES REGIONAL-LATA 710 CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "ANDES REGIONAL",
+      "calibre": "LATA 710 CC"
+    },
+    "ANDES REGIONAL-LATA 473 CC": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "ANDES REGIONAL",
+      "calibre": "LATA 473 CC"
+    },
+    "QUILMES + BRAHMA-1,2 L": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "QUILMES + BRAHMA",
+      "calibre": "1,2 L"
+    },
+    "SANTA FE + SANTE FE PILSEN-LITRO": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SANTA FE + SANTE FE PILSEN",
+      "calibre": "LITRO"
+    },
+    "SANTA FE + SANTE FE PILSEN-473 CC": {
+      "empresa": "CCU",
+      "segmento": "CORE",
+      "marca": "SANTA FE + SANTE FE PILSEN",
+      "calibre": "473 CC"
+    },
+    "BEAGLE-LITRO": {
+      "empresa": "OTROS",
+      "segmento": "SUPER PREMIUM",
+      "marca": "BEAGLE",
+      "calibre": "LITRO"
+    },
+    "BEAGLE-473 CC": {
+      "empresa": "OTROS",
+      "segmento": "SUPER PREMIUM",
+      "marca": "BEAGLE",
+      "calibre": "473 CC"
+    },
+    "CAPE HORN-500CC": {
+      "empresa": "OTROS",
+      "segmento": "SUPER PREMIUM",
+      "marca": "CAPE HORN",
+      "calibre": "500CC"
+    },
+    "ZEUS-LITRO PET": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "ZEUS",
+      "calibre": "LITRO PET"
+    },
+    "ZEUS-710 CC": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "ZEUS",
+      "calibre": "710 CC"
+    },
+    "ZEUS-473 CC": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "ZEUS",
+      "calibre": "473 CC"
+    },
+    "ZEUS-LITRO OW": {
+      "empresa": "OTROS",
+      "segmento": "VALUE",
+      "marca": "ZEUS",
+      "calibre": "LITRO OW"
+    },
+    "QUILMES CLASICA OW-LITRO OW": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "QUILMES CLASICA OW",
+      "calibre": "1 L"
+    },
+    "BRAHMA OW-LITRO OW": {
+      "empresa": "CMQ",
+      "segmento": "CORE",
+      "marca": "BRAHMA OW",
+      "calibre": "1 L"
+    },
+    "STELLA ARTOIS OW-LITRO OW": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "STELLA ARTOIS OW",
+      "calibre": "1 L"
+    },
+    "STELLA ARTOIS OW-3/4 OW": {
+      "empresa": "CMQ",
+      "segmento": "PREMIUM",
+      "marca": "STELLA ARTOIS OW",
+      "calibre": "3/4 OW"
+    },
+    "HEINEKEN OW-LITRO OW": {
+      "empresa": "CCU",
+      "segmento": "PREMIUM",
+      "marca": "HEINEKEN OW",
+      "calibre": "LITRO OW"
+    },
+    "CONTRABANDO / FRONTERA PREMIUM-473 CC": {
+      "empresa": "OTROS",
+      "segmento": "PREMIUM",
+      "marca": "CONTRABANDO / FRONTERA PREMIUM",
+      "calibre": "473 CC"
+    },
+    "CONTRABANDO / FRONTERA PREMIUM-LATA 330 CC": {
+      "empresa": "OTROS",
+      "segmento": "PREMIUM",
+      "marca": "CONTRABANDO / FRONTERA PREMIUM",
+      "calibre": "LATA 330 CC"
+    },
+    "CONTRABANDO / FRONTERA PREMIUM-VIDRIO 330 CC": {
+      "empresa": "OTROS",
+      "segmento": "PREMIUM",
+      "marca": "CONTRABANDO / FRONTERA PREMIUM",
+      "calibre": "VIDRIO 330 CC"
+    },
+    "CONTRABANDO / FRONTERA PREMIUM-940 Y OTRO": {
+      "empresa": "OTROS",
+      "segmento": "PREMIUM",
+      "marca": "CONTRABANDO / FRONTERA PREMIUM",
+      "calibre": "940 Y OTRO"
+    },
+    "CONTRABANDO / FRONTERA CORE-473 CC": {
+      "empresa": "OTROS",
+      "segmento": "CORE",
+      "marca": "CONTRABANDO / FRONTERA CORE",
+      "calibre": "473 CC"
+    },
+    "CONTRABANDO / FRONTERA CORE-LATA 330 CC": {
+      "empresa": "OTROS",
+      "segmento": "CORE",
+      "marca": "CONTRABANDO / FRONTERA CORE",
+      "calibre": "LATA 330 CC"
+    },
+    "CONTRABANDO / FRONTERA CORE-VIDRIO  330 CC": {
+      "empresa": "OTROS",
+      "segmento": "CORE",
+      "marca": "CONTRABANDO / FRONTERA CORE",
+      "calibre": "VIDRIO  330 CC"
+    },
+    "CONTRABANDO / FRONTERA CORE-940 Y OTROS": {
+      "empresa": "OTROS",
+      "segmento": "CORE",
+      "marca": "CONTRABANDO / FRONTERA CORE",
+      "calibre": "940 Y OTROS"
+    }
+  }
+}
